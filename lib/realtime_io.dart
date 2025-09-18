@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:openai/audio.dart';
-import 'package:openai/openai_client.dart';
-import 'package:openai/realtime.dart';
-import 'package:openai/realtime_session_controller.dart';
-import 'package:openai/responses.dart';
+import 'audio.dart';
+import 'openai_client.dart';
+import 'realtime.dart';
+import 'realtime_session_controller.dart';
+import 'responses.dart';
 
 extension RealtimeIO on OpenAIClient {
   Future<WebsocketRealtimeSessionController> createRealtimeSessionWebSocket(
@@ -73,7 +73,6 @@ class WebsocketRealtimeSessionController extends RealtimeSessionController {
 
   void _eventLoop() async {
     await for (final event in webSocket) {
-      print(event);
       serverEventsController.add(RealtimeEvent.fromJson(jsonDecode(event)));
     }
   }

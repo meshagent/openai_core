@@ -6,13 +6,12 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-
-import 'package:openai/common.dart';
-import 'package:openai/responses.dart';
 import 'package:test/test.dart';
-import 'package:openai/openai_client.dart';
 
-import 'package:openai/event_loop.dart';
+import '../lib/common.dart';
+import '../lib/responses.dart';
+import '../lib/openai_client.dart';
+import '../lib/event_loop.dart';
 
 class WeatherTool extends FunctionToolHandler {
   bool handlerCalled = false;
@@ -35,20 +34,90 @@ class WeatherTool extends FunctionToolHandler {
 
   @override
   Future<String> execute(Map<String, dynamic> arguments) async {
+    handlerCalled = true;
     final city = arguments['city'] as String;
     final tempC = 22;
     return jsonEncode({'city': city, 'temp_c': tempC});
   }
 }
 
+class DontCallTool extends FunctionToolHandler {
+  bool handlerCalled = false;
+
+  DontCallTool()
+      : super(
+            metadata: FunctionTool(
+                name: 'dont_call_this_tool',
+                description: 'always fails. do not ever call this function.',
+                strict: true,
+                parameters: {
+              'type': 'object',
+              'additionalProperties': false,
+              'properties': {},
+              'required': []
+            }));
+
+  @override
+  Future<String> execute(Map<String, dynamic> arguments) async {
+    return "";
+  }
+}
+
 class DummyImageGenerationToolHandler extends ImageGenerationToolHandler {
   DummyImageGenerationToolHandler({required super.metadata});
+
   @override
-  void handle(EventLoop controller, ResponseEvent event) {}
+  Future<void> onImageGenerationCall(
+      ResponseImageGenerationCallEvent e) async {}
 }
 
 void main() {
-  test('EventLoop invokes a FunctionTool and executes its handler', () async {
+  test(
+      'EventLoop invokes a FunctionTool and executes its handler when not streaming and not storing',
+      () async {
+    final apiKey = Platform.environment['OPENAI_API_KEY'];
+    if (apiKey == null || apiKey.isEmpty) {
+      fail(
+        'OPENAI_API_KEY must be set for this integration test. '
+        'Set it in your shell before running `dart test`.',
+      );
+    }
+
+    final client = OpenAIClient(apiKey: apiKey);
+
+    final tool = WeatherTool();
+    final abort = DontCallTool();
+
+    final session = ResponseSession(
+        client: client,
+        tools: [tool, abort],
+        // Tell the model it *must* use the tool.
+        model: ChatModel.gpt4o, // or any model that supports tool calls
+        store: false,
+        stream: false,
+        input: const ResponseInputText(
+            'What is the current temperature in Paris?'));
+
+    final response = await session.nextResponse();
+
+    client.close();
+
+    // ——— Assertions ———
+    expect(abort.handlerCalled, isFalse,
+        reason: 'FunctionTool handler should not have been executed.');
+
+    // ——— Assertions ———
+    expect(tool.handlerCalled, isTrue,
+        reason: 'FunctionTool handler should have been executed.');
+
+    // Optionally check that the tool’s synthetic answer made it back.
+    expect(response.outputText, contains('22'),
+        reason: 'The final answer should reference the temperature.');
+  });
+
+  test(
+      'EventLoop invokes a FunctionTool and executes its handler when not streaming and storing',
+      () async {
     final apiKey = Platform.environment['OPENAI_API_KEY'];
     if (apiKey == null || apiKey.isEmpty) {
       fail(
@@ -61,17 +130,17 @@ void main() {
 
     final tool = WeatherTool();
 
-    final loop = EventLoop(
+    final session = ResponseSession(
         client: client,
         tools: [tool],
         // Tell the model it *must* use the tool.
         model: ChatModel.gpt4o, // or any model that supports tool calls
-        store: false,
+        store: true,
         stream: false,
         input: const ResponseInputText(
             'What is the current temperature in Paris?'));
 
-    final response = await loop.tick();
+    final response = await session.nextResponse();
 
     client.close();
 
@@ -84,7 +153,9 @@ void main() {
         reason: 'The final answer should reference the temperature.');
   });
 
-  test('EventLoop invokes a FunctionTool and executes its handler', () async {
+  test(
+      'EventLoop invokes a FunctionTool and executes its handler when streaming and not storing)',
+      () async {
     final apiKey = Platform.environment['OPENAI_API_KEY'];
     if (apiKey == null || apiKey.isEmpty) {
       fail(
@@ -97,7 +168,7 @@ void main() {
 
     var tool = WeatherTool();
 
-    final loop = EventLoop(
+    final session = ResponseSession(
         client: client,
         tools: [tool],
         model: ChatModel.gpt4o, // or any model that supports tool calls
@@ -106,8 +177,43 @@ void main() {
         input: const ResponseInputText(
             'What is the current temperature in Paris?'));
 
-    final response = await loop.tick();
+    final response = await session.nextResponse();
+    client.close();
 
+    // ——— Assertions ———
+    expect(tool.handlerCalled, isTrue,
+        reason: 'FunctionTool handler should have been executed.');
+
+    // Optionally check that the tool’s synthetic answer made it back.
+    expect(response.outputText, contains('22'),
+        reason: 'The final answer should reference the temperature.');
+  });
+
+  test(
+      'EventLoop invokes a FunctionTool and executes its handler when streaming and storing)',
+      () async {
+    final apiKey = Platform.environment['OPENAI_API_KEY'];
+    if (apiKey == null || apiKey.isEmpty) {
+      fail(
+        'OPENAI_API_KEY must be set for this integration test. '
+        'Set it in your shell before running `dart test`.',
+      );
+    }
+
+    final client = OpenAIClient(apiKey: apiKey);
+
+    var tool = WeatherTool();
+
+    final session = ResponseSession(
+        client: client,
+        tools: [tool],
+        model: ChatModel.gpt4o, // or any model that supports tool calls
+        store: true,
+        stream: true,
+        input: const ResponseInputText(
+            'What is the current temperature in Paris?'));
+
+    final response = await session.nextResponse();
     client.close();
 
     // ——— Assertions ———
@@ -130,7 +236,7 @@ void main() {
 
       final client = OpenAIClient(apiKey: apiKey);
 
-      final loop = EventLoop(
+      final session = ResponseSession(
           client: client,
           tools: [
             DummyImageGenerationToolHandler(
@@ -145,7 +251,7 @@ void main() {
           stream: false,
           input: const ResponseInputText("make me an image of a cat"));
 
-      final response = await loop.tick();
+      final response = await session.nextResponse(false);
       client.close();
 
       final imgCall = response.output!
@@ -181,7 +287,7 @@ void main() {
 
       final client = OpenAIClient(apiKey: apiKey);
 
-      final loop = EventLoop(
+      final session = ResponseSession(
           client: client,
           tools: [
             DummyImageGenerationToolHandler(
@@ -199,12 +305,12 @@ void main() {
 
       bool partialReceived = false;
 
-      loop.serverEvents.listen((e) {
+      session.serverEvents.listen((e) {
         if (e is ResponseImageGenerationCallPartialImage) {
           partialReceived = true;
         }
       });
-      final response = await loop.tick();
+      final response = await session.nextResponse(false);
 
       client.close();
 
@@ -265,13 +371,13 @@ void main() {
         ),
       ]);
 
-      final loop = EventLoop(
+      final session = ResponseSession(
         client: client,
         model: ChatModel.gpt4o, // any GPT-4o variant that supports vision
         stream: false, // easier: single blocking call, no SSE
       )..input = visionInput;
 
-      final response = await loop.tick();
+      final response = await session.nextResponse(false);
       client.close();
 
       final description = response.outputText;

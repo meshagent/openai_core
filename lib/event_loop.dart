@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:openai/common.dart';
-import 'package:openai/exceptions.dart';
-import 'package:openai/openai_client.dart';
-import 'package:openai/responses.dart';
+import 'common.dart';
+import 'exceptions.dart';
+import 'openai_client.dart';
+import 'responses.dart';
 
 class MissingResponseCompletedException extends OpenAIException {
   MissingResponseCompletedException() : super(message: "stream did not return a response completed event");
@@ -17,8 +17,8 @@ class MissingToolException extends OpenAIException {
   final String name;
 }
 
-class EventLoop {
-  EventLoop(
+class ResponseSession {
+  ResponseSession(
       {required this.client,
       this.background,
       this.input,
@@ -38,8 +38,11 @@ class EventLoop {
       this.topP,
       this.truncation,
       this.user,
-      this.stream = true})
-      : this._tools = tools ?? const [];
+      this.stream = true}) {
+    if (tools != null) {
+      this.addTools(tools);
+    }
+  }
 
   final OpenAIClient client;
 
@@ -69,7 +72,7 @@ class EventLoop {
     return serverEventsController.stream;
   }
 
-  final List<ToolHandler> _tools;
+  final List<ToolHandler> _tools = [];
   Iterable<ToolHandler> get tools {
     return _tools;
   }
@@ -77,26 +80,24 @@ class EventLoop {
   Future<void> addTools(List<ToolHandler> tools) async {
     for (final tool in tools) {
       if (this._tools.any((t) => t.metadata.matches(tool.metadata))) {
-        throw new ArgumentError("tool ${tool.metadata} cannot be added is already attached");
+        throw new ArgumentError("tool ${tool.metadata} is already added");
       }
     }
 
     for (final tool in tools) {
       this._tools.add(tool);
-      tool.didAttach(this);
     }
   }
 
   Future<void> removeTools(List<ToolHandler> tools) async {
     for (final tool in tools) {
       if (!this._tools.any((t) => t.metadata.matches(tool.metadata))) {
-        throw new ArgumentError("tool ${tool.metadata} cannot be removed because it is not attached");
+        throw new ArgumentError("tool ${tool.metadata} cannot be removed because it was not found");
       }
     }
 
     for (final tool in tools) {
       this._tools.remove(tool);
-      tool.didDetach(this);
     }
   }
 
@@ -126,6 +127,13 @@ class EventLoop {
       );
 
       await for (final event in responseStream.events) {
+        for (final tool in this._tools) {
+          final e = tool.getHandler(event);
+          if (e != null) {
+            await _handle(event, e);
+          }
+        }
+
         serverEventsController.sink.add(event);
         switch (event) {
           case ResponseCompleted():
@@ -157,11 +165,24 @@ class EventLoop {
         );
         int index = 0;
         for (final output in response.output ?? []) {
-          serverEventsController.add(ResponseOutputItemAdded(item: output, outputIndex: index, sequenceNumber: _sequenceNumber++));
-          serverEventsController.add(ResponseOutputItemDone(item: output, outputIndex: index, sequenceNumber: _sequenceNumber++));
+          final events = [
+            ResponseOutputItemAdded(item: output, outputIndex: index, sequenceNumber: _sequenceNumber++),
+            ResponseOutputItemDone(item: output, outputIndex: index, sequenceNumber: _sequenceNumber++),
+            ResponseCompleted(response: response, sequenceNumber: _sequenceNumber++)
+          ];
+
+          for (final evt in events) {
+            for (final tool in this._tools) {
+              final e = tool.getHandler(evt);
+              if (e != null) {
+                await _handle(evt, e);
+              }
+            }
+
+            serverEventsController.add(evt);
+          }
           index++;
         }
-        serverEventsController.add(ResponseCompleted(response: response, sequenceNumber: _sequenceNumber++));
         return response;
       } on OpenAIRequestException catch (e) {
         final response = Response(error: ResponseError(code: e.code ?? "", message: e.message, param: e.param));
@@ -171,33 +192,46 @@ class EventLoop {
     }
   }
 
-  void didBeginHandling(ResponseItem item) {}
-  void didEndHandling(ResponseItem item) {}
+  void didBeginHandling(ResponseEvent item) {}
+  void didEndHandling(ResponseEvent item) {}
 
-  void didCompleteClientTurn() {
+  void didCompleteClientTurn(Response response) {
     if (store == true) {
+      previousResponseId = response.id;
       this.input = ResponseInputItems([..._pendingOutputs.values.whereType<ResponseItem>()]);
     } else {
       if (input is ResponseInputItems) {
-        this.input = ResponseInputItems([...(input as ResponseInputItems).items, ..._pendingOutputs.values.whereType<ResponseItem>()]);
+        this.input = ResponseInputItems([
+          ...(input as ResponseInputItems).items,
+          if (response.output != null) ...response.output!,
+          ..._pendingOutputs.values.whereType<ResponseItem>()
+        ]);
       } else if (input is ResponseInputText) {
         final text = input as ResponseInputText;
-        this.input = ResponseInputItems([InputText(role: "user", text: text.text), ..._pendingOutputs.values.whereType<ResponseItem>()]);
+        this.input = ResponseInputItems([
+          InputText(role: "user", text: text.text),
+          if (response.output != null) ...response.output!,
+          ..._pendingOutputs.values.whereType<ResponseItem>()
+        ]);
       } else {
-        throw ArgumentError("There was no input");
+        throw ArgumentError("There was no input or input was unexpected");
       }
     }
-    // TODO: notify user
 
     _pendingOutputs.clear();
   }
 
-  void handle(ResponseItem input, Future<ResponseItem> Function(ResponseItem) handler) async {
+  Future<void> _handle(ResponseEvent input, Future<ResponseItem?> Function() handler) async {
     _registerPendingOutput(input);
 
     didBeginHandling(input);
 
-    _addLocalOutput(input, await handler(input));
+    final output = await handler();
+    if (output != null) {
+      _addLocalOutput(input, output);
+    } else {
+      _pendingOutputs.remove(input);
+    }
 
     didEndHandling(input);
 
@@ -206,12 +240,9 @@ class EventLoop {
         return;
       }
     }
-
-    // TODO: what if response is still in progress? need to wait for server turn to complete first.
-    didCompleteClientTurn();
   }
 
-  void _addLocalOutput(ResponseItem input, ResponseItem output) {
+  void _addLocalOutput(ResponseEvent input, ResponseItem output) {
     if (_pendingOutputs[input] == null) {
       _pendingOutputs[input] = output;
     } else {
@@ -219,25 +250,39 @@ class EventLoop {
     }
   }
 
-  void _registerPendingOutput(ResponseItem input) {
+  void _registerPendingOutput(ResponseEvent input) {
     _pendingOutputs[input] = null;
   }
 
-  final Map<ResponseItem, ResponseItem?> _pendingOutputs = {};
+  final Map<ResponseEvent, ResponseItem?> _pendingOutputs = {};
 
-  Future<Response> tick() async {
+  Future<Response> _takeTurn() async {
     Response lastResponse = await _createResponse();
+
+    didCompleteClientTurn(lastResponse);
 
     final error = lastResponse.error;
     if (error != null) {
       throw OpenAIRequestException(
-          message: error.message, code: error.code, param: error.param, statusCode: 200); // TODO: need to pull status code from response?
+          message: error.message, code: error.code, param: error.param, statusCode: -1); // TODO: need to pull status code from response?
     }
-    if (store == true) {
-      previousResponseId = lastResponse.id;
-    } else {
-      this.input = ResponseInputItems([...(input as ResponseInputItems).items, ...lastResponse.output ?? []]);
-    }
+
     return lastResponse;
+  }
+
+  Future<Response> nextResponse([bool autoIterate = true]) async {
+    Response response;
+    do {
+      response = await _takeTurn();
+
+      if (response.error != null) {
+        return response;
+      }
+      if (response.outputText != null) {
+        return response;
+      }
+    } while (autoIterate);
+
+    return response;
   }
 }

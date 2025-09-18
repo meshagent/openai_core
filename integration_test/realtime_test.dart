@@ -7,9 +7,9 @@
 import 'dart:io';
 
 import 'package:test/test.dart';
-import 'package:openai/openai_client.dart';
-import 'package:openai/audio.dart'; // SpeechVoice, AudioModel, …
-import 'package:openai/realtime.dart'; // the code you pasted
+import '../lib/openai_client.dart';
+import '../lib/audio.dart'; // SpeechVoice, AudioModel, …
+import '../lib/realtime.dart'; // the code you pasted
 
 void main() {
   final apiKey = Platform.environment['OPENAI_API_KEY'];
@@ -111,8 +111,6 @@ void main() {
         sdp: sdpOffer,
         ephemeralKey: s.clientSecret!.value,
       );
-
-      print(sdpAnswer);
 
       expect(sdpAnswer, contains('v=0'),
           reason: 'Should return a valid SDP blob');

@@ -8,9 +8,9 @@
 import 'dart:io';
 
 import 'package:test/test.dart';
-import 'package:openai/openai_client.dart';
-import 'package:openai/realtime.dart'; // brings RealtimeEvent & friends
-import 'package:openai/realtime_web.dart'; // the extension you pasted above
+import '../lib/openai_client.dart';
+import '../lib/realtime.dart'; // brings RealtimeEvent & friends
+import '../lib/realtime_web.dart'; // the extension you pasted above
 
 void main() {
   // Pull the API key from the environment – fail fast if it’s missing.

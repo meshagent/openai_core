@@ -6,11 +6,11 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:openai/audio.dart';
-import 'package:openai/common.dart';
-import 'package:openai/exceptions.dart';
-import 'package:openai/openai_client.dart';
-import 'package:openai/responses.dart';
+import 'audio.dart';
+import 'common.dart';
+import 'exceptions.dart';
+import 'openai_client.dart';
+import 'responses.dart';
 
 enum AudioFormat with JsonEnum {
   pcm16('pcm16'),
@@ -458,7 +458,6 @@ extension RealtimeAPI on OpenAIClient {
     };
 
     final res = await postJson('/realtime/sessions', payload);
-    print(res.body);
     if (res.statusCode == 200) {
       return RealtimeSession.fromJson(jsonDecode(res.body));
     }
@@ -494,7 +493,6 @@ extension RealtimeAPI on OpenAIClient {
     };
 
     final res = await postJson('/realtime/transcription_sessions', payload);
-    print(res.body);
     if (res.statusCode == 200) {
       return RealtimeTranscriptionSession.fromJson(jsonDecode(res.body));
     }

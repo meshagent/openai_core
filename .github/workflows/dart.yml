@@ -40,3 +40,25 @@ jobs:
 
       - name: Analyze project source
         run: dart analyze .
+
+  test:
+    name: Dart Tests
+    runs-on: ubuntu-latest
+    # Only run tests if an API key is configured for this repo
+    if: ${{ secrets.OPENAI_API_KEY != '' }}
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Dart SDK
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Run integration tests
+        run: dart test integration_test -r expanded

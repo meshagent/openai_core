@@ -1,7 +1,7 @@
 import "dart:typed_data";
 
 import "package:http/http.dart";
-import "package:openai/exceptions.dart";
+import "exceptions.dart";
 import "sse_client.dart";
 import "dart:convert";
 
@@ -64,7 +64,7 @@ class OpenAIClient {
   }
 
   /// POST a JSON body and expose the (chunked) response body as a byte stream.
-  Stream<List<int>> streamJsonData(String path, Map<String, dynamic> body, {Map<String, dynamic>? headers}) async* {
+  Stream<Uint8List> streamJsonData(String path, Map<String, dynamic> body, {Map<String, dynamic>? headers}) async* {
     // Clean up the relative path without mutating the parameter (parameters are
     // final in Dart).
     final relative = path.startsWith('/') ? path.substring(1) : path;
@@ -79,10 +79,6 @@ class OpenAIClient {
 
     // Fail fast on non-2xx.
     if (res.statusCode < 200 || res.statusCode >= 300) {
-      print(res.stream
-          .transform(utf8.decoder) //
-          .transform(const JsonDecoder())
-          .single);
       throw OpenAIRequestException(
         statusCode: res.statusCode,
         message: res.reasonPhrase ?? "request failed",

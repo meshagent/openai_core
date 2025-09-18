@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:openai/realtime.dart';
+import 'realtime.dart';
 
 class RealtimeSessionException implements Exception {
   RealtimeSessionException(this.error);

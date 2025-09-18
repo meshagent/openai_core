@@ -11,7 +11,7 @@ import 'package:test/test.dart';
 import '../lib/common.dart';
 import '../lib/responses.dart';
 import '../lib/openai_client.dart';
-import '../lib/event_loop.dart';
+import '../lib/responses_session.dart';
 
 class WeatherTool extends FunctionToolHandler {
   bool handlerCalled = false;
@@ -73,7 +73,7 @@ class DummyImageGenerationToolHandler extends ImageGenerationToolHandler {
 
 void main() {
   test(
-      'EventLoop invokes a FunctionTool and executes its handler when not streaming and not storing',
+      'Session invokes a FunctionTool and executes its handler when not streaming and not storing',
       () async {
     final apiKey = Platform.environment['OPENAI_API_KEY'];
     if (apiKey == null || apiKey.isEmpty) {
@@ -88,7 +88,7 @@ void main() {
     final tool = WeatherTool();
     final abort = DontCallTool();
 
-    final session = ResponseSession(
+    final session = ResponsesSession(
         client: client,
         tools: [tool, abort],
         // Tell the model it *must* use the tool.
@@ -116,7 +116,7 @@ void main() {
   });
 
   test(
-      'EventLoop invokes a FunctionTool and executes its handler when not streaming and storing',
+      'Session invokes a FunctionTool and executes its handler when not streaming and storing',
       () async {
     final apiKey = Platform.environment['OPENAI_API_KEY'];
     if (apiKey == null || apiKey.isEmpty) {
@@ -130,7 +130,7 @@ void main() {
 
     final tool = WeatherTool();
 
-    final session = ResponseSession(
+    final session = ResponsesSession(
         client: client,
         tools: [tool],
         // Tell the model it *must* use the tool.
@@ -154,7 +154,7 @@ void main() {
   });
 
   test(
-      'EventLoop invokes a FunctionTool and executes its handler when streaming and not storing)',
+      'Session invokes a FunctionTool and executes its handler when streaming and not storing)',
       () async {
     final apiKey = Platform.environment['OPENAI_API_KEY'];
     if (apiKey == null || apiKey.isEmpty) {
@@ -168,7 +168,7 @@ void main() {
 
     var tool = WeatherTool();
 
-    final session = ResponseSession(
+    final session = ResponsesSession(
         client: client,
         tools: [tool],
         model: ChatModel.gpt4o, // or any model that supports tool calls
@@ -190,7 +190,7 @@ void main() {
   });
 
   test(
-      'EventLoop invokes a FunctionTool and executes its handler when streaming and storing)',
+      'Session invokes a FunctionTool and executes its handler when streaming and storing)',
       () async {
     final apiKey = Platform.environment['OPENAI_API_KEY'];
     if (apiKey == null || apiKey.isEmpty) {
@@ -204,7 +204,7 @@ void main() {
 
     var tool = WeatherTool();
 
-    final session = ResponseSession(
+    final session = ResponsesSession(
         client: client,
         tools: [tool],
         model: ChatModel.gpt4o, // or any model that supports tool calls
@@ -226,7 +226,7 @@ void main() {
   });
 
   test(
-    'EventLoop completes an image_generation tool call',
+    'Session completes an image_generation tool call',
     timeout: const Timeout(Duration(minutes: 2)),
     () async {
       final apiKey = Platform.environment['OPENAI_API_KEY'];
@@ -236,7 +236,7 @@ void main() {
 
       final client = OpenAIClient(apiKey: apiKey);
 
-      final session = ResponseSession(
+      final session = ResponsesSession(
           client: client,
           tools: [
             DummyImageGenerationToolHandler(
@@ -277,7 +277,7 @@ void main() {
   );
 
   test(
-    'EventLoop completes an image_generation tool call',
+    'Session completes an image_generation tool call',
     timeout: const Timeout(Duration(minutes: 2)),
     () async {
       final apiKey = Platform.environment['OPENAI_API_KEY'];
@@ -287,7 +287,7 @@ void main() {
 
       final client = OpenAIClient(apiKey: apiKey);
 
-      final session = ResponseSession(
+      final session = ResponsesSession(
           client: client,
           tools: [
             DummyImageGenerationToolHandler(
@@ -371,7 +371,7 @@ void main() {
         ),
       ]);
 
-      final session = ResponseSession(
+      final session = ResponsesSession(
         client: client,
         model: ChatModel.gpt4o, // any GPT-4o variant that supports vision
         stream: false, // easier: single blocking call, no SSE

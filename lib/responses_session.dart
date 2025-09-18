@@ -17,8 +17,8 @@ class MissingToolException extends OpenAIException {
   final String name;
 }
 
-class ResponseSession {
-  ResponseSession(
+class ResponsesSession {
+  ResponsesSession(
       {required this.client,
       this.background,
       this.input,

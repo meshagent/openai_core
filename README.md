@@ -137,3 +137,67 @@ Future<void> main() async {
 ## Notes
 
 - This is an independent Dart implementation of the OpenAI API.
+
+## ResponsesSession
+
+`ResponsesSession` manages a multi‑turn Responses conversation for you, including automatic tool calling and iterative turns until a final answer is produced.
+
+- Orchestrates turns: builds the next `input` from prior output or `previousResponseId` when `store` is true.
+- Automatic tools: register tool handlers; when the model calls a tool, the session executes your handler and feeds the result back.
+- Streaming or blocking: set `stream: true` to process server‑sent events; observe all events via `session.serverEvents`.
+- One call: `nextResponse([autoIterate])` runs turns until an answer (`outputText`) or error is returned.
+
+Example: function tool + single call
+
+```dart
+import 'dart:convert';
+import 'openai_client.dart';
+import 'responses.dart';
+import 'responses_session.dart';
+
+// Define a tool by extending FunctionToolHandler.
+class WeatherTool extends FunctionToolHandler {
+  WeatherTool()
+      : super(
+          metadata: FunctionTool(
+            name: 'get_current_temperature',
+            description: 'Returns the current temperature in Celsius for a city.',
+            strict: true,
+            parameters: {
+              'type': 'object',
+              'additionalProperties': false,
+              'properties': {
+                'city': {'type': 'string', 'description': 'City name'},
+              },
+              'required': ['city'],
+            },
+          ),
+        );
+
+  @override
+  Future<String> execute(Map<String, dynamic> args) async {
+    final city = args['city'] as String;
+    final tempC = 22; // look up real weather here
+    return jsonEncode({'city': city, 'temp_c': tempC});
+  }
+}
+
+Future<void> main() async {
+  final client = OpenAIClient(apiKey: const String.fromEnvironment('OPENAI_API_KEY'));
+
+  final session = ResponsesSession(
+    client: client,
+    model: ChatModel.gpt4o,
+    stream: false, // set true to receive SSE events
+    store: false,  // set true to use previousResponseId on the server
+    tools: [WeatherTool()],
+    input: const ResponseInputText('What is the current temperature in Paris?'),
+  );
+
+  // Runs one or more turns automatically until outputText is present.
+  final response = await session.nextResponse();
+  print(response.outputText);
+
+  client.close();
+}
+```

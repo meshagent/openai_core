@@ -1,11 +1,11 @@
 // test/image_generation_test.dart
 import 'dart:typed_data';
 import 'dart:io';
-
-import 'package:openai/responses.dart';
 import 'package:test/test.dart';
-import 'package:openai/openai_client.dart';
-import 'package:openai/images.dart'; // where createImage lives
+
+import '../lib/responses.dart';
+import '../lib/openai_client.dart';
+import '../lib/images.dart'; // where createImage lives
 
 void main() {
   test('createImage returns image bytes', () async {

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
+import 'package:openai/responses.dart';
 
 /// Simple SSE client for Dart or Flutter (dart:io).
 class SseClient {
@@ -41,12 +42,18 @@ class SseClient {
     final res = await httpClient.send(req);
 
     if (res.statusCode != 200) {
-      _controller.addError(
-        StateError(
-          'SSE handshake failed: '
-          'HTTP ${res.statusCode}',
-        ),
-      );
+      final body = await res.stream.toBytes();
+      try {
+        // TODO: move to error handler so we don't couple SSE client to responses API
+        final error = ResponseError.fromJson(jsonDecode(utf8.decode(body))["error"]);
+        _controller.addError(error);
+      } catch (e) {
+        _controller.addError(
+          StateError('SSE handshake failed: '
+              'HTTP ${res.statusCode}: ${e} ${utf8.decode(body)}'),
+        );
+      }
+
       await close();
       return;
     }

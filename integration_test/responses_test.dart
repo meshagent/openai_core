@@ -1,10 +1,10 @@
 // test/integration/response_api_test.dart
 @Timeout(Duration(minutes: 3)) // responses can stream for a bit
 import 'dart:io';
-
-import 'package:openai/common.dart';
 import 'package:test/test.dart';
-import 'package:openai/openai_client.dart'; // core SDK
+
+import '../lib/common.dart';
+import '../lib/openai_client.dart'; // core SDK
 import '../lib/responses.dart';
 import 'dart:convert';
 
@@ -78,9 +78,9 @@ void main() {
     expect(completedEvt, isNotNull, reason: 'No response.completed event seen');
     final finalText = buffer.toString().toLowerCase();
     expect(
-        finalText.contains('1') &&
-            finalText.contains('2') &&
-            finalText.contains('3'),
+        (finalText.contains('1') || finalText.contains('one')) &&
+            (finalText.contains('2') || finalText.contains('two')) &&
+            (finalText.contains('3') || finalText.contains('three')),
         isTrue,
         reason: 'Expected the model to count to three, got: "$finalText"');
   });

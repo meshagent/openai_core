@@ -1,8 +1,8 @@
 import 'dart:convert';
 
-import 'package:openai/common.dart';
-import 'package:openai/exceptions.dart';
-import 'package:openai/openai_client.dart';
+import 'common.dart';
+import 'exceptions.dart';
+import 'openai_client.dart';
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /*   /embeddings — sync helper                                               */

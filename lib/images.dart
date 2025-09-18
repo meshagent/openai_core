@@ -5,10 +5,10 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:openai/common.dart';
-import 'package:openai/exceptions.dart';
-import 'package:openai/openai_client.dart';
-import 'package:openai/responses.dart';
+import 'common.dart';
+import 'exceptions.dart';
+import 'openai_client.dart';
+import 'responses.dart';
 import 'package:mime/mime.dart';
 
 extension ImagesAPI on OpenAIClient {
@@ -46,7 +46,6 @@ extension ImagesAPI on OpenAIClient {
     if (resp.statusCode == 200) {
       return ImagesResult.fromJson(jsonDecode(resp.body));
     }
-    print(resp.body);
     throw OpenAIRequestException.fromHttpResponse(resp);
   }
 
@@ -101,7 +100,6 @@ extension ImagesAPI on OpenAIClient {
     if (resp.statusCode == 200) {
       return ImagesResult.fromJson(jsonDecode(resp.body));
     }
-    print(resp.body);
     throw OpenAIRequestException.fromHttpResponse(resp);
   }
 
@@ -141,7 +139,6 @@ extension ImagesAPI on OpenAIClient {
     if (resp.statusCode == 200) {
       return ImagesResult.fromJson(jsonDecode(resp.body));
     }
-    print(resp.body);
     throw OpenAIRequestException.fromHttpResponse(resp);
   }
 }

@@ -1,8 +1,9 @@
 import 'dart:io';
 import 'package:test/test.dart';
-import 'package:openai/openai_client.dart';
-import 'package:openai/audio.dart'; // import where you added the helpers
+// import where you added the helpers
 import 'dart:typed_data';
+import '../lib/openai_client.dart';
+import '../lib/audio.dart';
 
 void main() {
   test('Non-streaming transcription returns expected text', () async {

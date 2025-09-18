@@ -6,9 +6,9 @@
 
 import 'dart:io';
 import 'package:test/test.dart';
-import 'package:openai/openai_client.dart';
+import '../lib/openai_client.dart';
 
-import 'package:openai/embeddings.dart'; // where createEmbeddings() lives
+import '../lib/embeddings.dart'; // where createEmbeddings() lives
 
 void main() {
   test('createEmbeddings returns a valid vector (float format)', () async {

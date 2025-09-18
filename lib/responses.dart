@@ -1,11 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:openai/common.dart';
-import 'package:openai/event_loop.dart';
-import 'package:openai/exceptions.dart';
-import 'package:openai/openai_client.dart';
-import 'package:openai/sse_client.dart';
+import 'common.dart';
+import 'exceptions.dart';
+import 'openai_client.dart';
+import 'sse_client.dart';
 
 extension ResponsesAPI on OpenAIClient {
   Future<Response> createResponse({
@@ -1180,6 +1179,7 @@ class Response {
   final List<ResponseItem>? output;
   String? get outputText {
     StringBuffer buf = StringBuffer();
+
     if (output != null) {
       for (final o in output!) {
         if (o is OutputMessage) {
@@ -1288,7 +1288,7 @@ class Response {
 /// Error information returned when the model fails to generate a response.
 class ResponseError {
   /// A short machine-readable code, e.g. `"rate_limit_exceeded"`.
-  final String code;
+  final String? code;
 
   /// Human-readable explanation of the failure.
   final String message;
@@ -1311,7 +1311,7 @@ class ResponseError {
 
   /// JSON-deserialization helper.
   factory ResponseError.fromJson(Map<String, dynamic> json) => ResponseError(
-        code: json['code'] as String,
+        code: json['code'] as String?,
         message: json['message'] as String,
         param: json['param'] as String?,
       );
@@ -2302,52 +2302,18 @@ class FunctionTool extends Tool {
       };
 }
 
-abstract class ToolHandler<TMeta extends Tool, TEvent extends ResponseEvent> {
+abstract class ToolHandler<TMeta extends Tool> {
   ToolHandler({required this.metadata});
 
   final TMeta metadata;
 
-  Map<EventLoop, StreamSubscription> _attachedTo = {};
-
-  Stream<TEvent> filter(Stream<ResponseEvent> events) {
-    return events.where((event) => event is TEvent).map((event) => event as TEvent);
-  }
-
-  void handle(EventLoop controller, TEvent event);
-
-  void didAttach(EventLoop controller) {
-    if (!_attachedTo.containsKey(controller)) {
-      _attachedTo[controller] = filter(controller.serverEvents).listen((e) {
-        handle(controller, e);
-      });
-    } else {
-      throw ArgumentError("Already listening to controller");
-    }
-  }
-
-  void didDetach(EventLoop controller) {
-    final sub = _attachedTo.remove(controller);
-    sub!.cancel();
-  }
+  Future<ResponseItem?> Function()? getHandler(ResponseEvent event);
 }
 
-abstract class ToolCallHandler<TMeta extends Tool, TInput extends ResponseItem, TOutput extends ResponseItem>
-    extends ToolHandler<TMeta, ResponseOutputItemDone> {
+abstract class ToolCallHandler<TMeta extends Tool, TInput extends ResponseItem, TOutput extends ResponseItem> extends ToolHandler<TMeta> {
   ToolCallHandler({required super.metadata});
 
   Future<TOutput> call(TInput call);
-
-  Map<EventLoop, StreamSubscription> _attachedTo = {};
-
-  Stream<ResponseOutputItemDone> filter(Stream<ResponseEvent> events) {
-    return events.where((e) => e is ResponseOutputItemDone && e.item is TInput).map((event) => event as ResponseOutputItemDone);
-  }
-
-  void handle(EventLoop controller, ResponseOutputItemDone e) {
-    if (e.item is TInput) {
-      controller.handle(e.item, (e) async => await call(e as TInput));
-    }
-  }
 }
 
 abstract class FunctionToolHandler extends ToolCallHandler<FunctionTool, FunctionCall, FunctionCallOutput> {
@@ -2357,6 +2323,15 @@ abstract class FunctionToolHandler extends ToolCallHandler<FunctionTool, Functio
 
   String translateError(Object error) {
     return "The function call failed with the following error: $error";
+  }
+
+  @override
+  Future<ResponseItem?> Function()? getHandler(ResponseEvent event) {
+    if (event is ResponseOutputItemDone && event.item is FunctionCall && (event.item as FunctionCall).name == metadata.name) {
+      return () => call(event.item as FunctionCall);
+    }
+
+    return null;
   }
 
   @override
@@ -2394,13 +2369,21 @@ class FileSearchTool extends Tool {
       };
 }
 
-abstract class FileSearchToolHandler extends ToolHandler<FileSearchTool, ResponseFileSearchCallEvent> {
+abstract class FileSearchToolHandler extends ToolHandler<FileSearchTool> {
   FileSearchToolHandler({required super.metadata});
 
   @override
-  Stream<ResponseFileSearchCallEvent> filter(Stream<ResponseEvent> events) {
-    return events.where((t) => t is ResponseFileSearchCallEvent).map((e) => e as ResponseFileSearchCallEvent);
+  Future<ResponseItem?> Function()? getHandler(ResponseEvent event) {
+    if (event is ResponseFileSearchCallEvent) {
+      return () async {
+        onFileSearch(event);
+        return null;
+      };
+    }
+    return null;
   }
+
+  Future<void> onFileSearch(ResponseFileSearchCallEvent e);
 }
 
 /// — web_search_preview
@@ -2417,13 +2400,21 @@ class WebSearchPreviewTool extends Tool {
       };
 }
 
-abstract class WebSearchToolHandler extends ToolHandler<WebSearchPreviewTool, ResponseWebSearchCallEvent> {
+abstract class WebSearchToolHandler extends ToolHandler<WebSearchPreviewTool> {
   WebSearchToolHandler({required super.metadata});
 
   @override
-  Stream<ResponseWebSearchCallEvent> filter(Stream<ResponseEvent> events) {
-    return events.where((t) => t is ResponseWebSearchCallEvent).map((e) => e as ResponseWebSearchCallEvent);
+  Future<ResponseItem?> Function()? getHandler(ResponseEvent event) {
+    if (event is ResponseWebSearchCallEvent) {
+      return () async {
+        onWebSearch(event);
+        return null;
+      };
+    }
+    return null;
   }
+
+  Future<void> onWebSearch(ResponseWebSearchCallEvent e);
 }
 
 /// — computer_use_preview
@@ -2474,13 +2465,21 @@ class McpTool extends Tool {
       };
 }
 
-abstract class McpToolHandler extends ToolHandler<McpTool, ResponseMcpCallEvent> {
+abstract class McpToolHandler extends ToolHandler<McpTool> {
   McpToolHandler({required super.metadata});
 
   @override
-  Stream<ResponseMcpCallEvent> filter(Stream<ResponseEvent> events) {
-    return events.where((t) => t is ResponseMcpCallEvent).map((t) => t as ResponseMcpCallEvent);
+  Future<ResponseItem?> Function()? getHandler(ResponseEvent event) {
+    if (event is ResponseMcpCallEvent) {
+      return () async {
+        onMcpCall(event);
+        return null;
+      };
+    }
+    return null;
   }
+
+  Future<void> onMcpCall(ResponseMcpCallEvent e);
 }
 
 /// — code_interpreter
@@ -2492,13 +2491,21 @@ class CodeInterpreterTool extends Tool {
   Map<String, dynamic> toJson() => {'type': 'code_interpreter', 'container': container.toJson()};
 }
 
-abstract class CodeInterpreterToolHandler extends ToolHandler<CodeInterpreterTool, ResponseCodeInterpreterCallEvent> {
+abstract class CodeInterpreterToolHandler extends ToolHandler<CodeInterpreterTool> {
   CodeInterpreterToolHandler({required super.metadata});
 
   @override
-  Stream<ResponseCodeInterpreterCallEvent> filter(Stream<ResponseEvent> events) {
-    return events.where((t) => t is ResponseCodeInterpreterCallEvent).map((e) => e as ResponseCodeInterpreterCallEvent);
+  Future<ResponseItem?> Function()? getHandler(ResponseEvent event) {
+    if (event is ResponseCodeInterpreterCallEvent) {
+      return () async {
+        onCodeInterpreterCall(event);
+        return null;
+      };
+    }
+    return null;
   }
+
+  Future<void> onCodeInterpreterCall(ResponseCodeInterpreterCallEvent e);
 }
 
 /// — image_generation
@@ -2544,9 +2551,17 @@ abstract class ImageGenerationToolHandler extends ToolHandler {
   ImageGenerationToolHandler({required super.metadata});
 
   @override
-  Stream<ResponseImageGenerationCallEvent> filter(Stream<ResponseEvent> events) {
-    return events.where((t) => t is ResponseImageGenerationCallEvent).map((e) => e as ResponseImageGenerationCallEvent);
+  Future<ResponseItem?> Function()? getHandler(ResponseEvent event) {
+    if (event is ResponseImageGenerationCallEvent) {
+      return () async {
+        onImageGenerationCall(event);
+        return null;
+      };
+    }
+    return null;
   }
+
+  Future<void> onImageGenerationCall(ResponseImageGenerationCallEvent e);
 }
 
 /// — local_shell
@@ -2558,6 +2573,19 @@ class LocalShellTool extends Tool {
 
 abstract class LocalShellToolHandler extends ToolCallHandler<LocalShellTool, LocalShellCall, LocalShellCallOutput> {
   LocalShellToolHandler({required super.metadata});
+
+  @override
+  Future<ResponseItem?> Function()? getHandler(ResponseEvent event) {
+    if (event is LocalShellCall) {
+      return () async {
+        onLocalShellToolCall(event as LocalShellCall);
+        return null;
+      };
+    }
+    return null;
+  }
+
+  Future<LocalShellCallOutput> onLocalShellToolCall(LocalShellCall e);
 }
 
 /// Fallback for bespoke tool types.
@@ -2728,7 +2756,7 @@ abstract class ResponseEvent {
 
       // ────────── Generic stream-level error ──────────
       case 'error':
-        return ErrorEvent.fromJson(json);
+        return ErrorEvent.fromJson(json["error"]);
 
       // ────────── Unknown type ──────────
       default:
@@ -4144,12 +4172,14 @@ class ErrorEvent extends ResponseEvent {
     required this.sequenceNumber,
   }) : super('error');
 
-  factory ErrorEvent.fromJson(Map<String, dynamic> j) => ErrorEvent(
-        code: j['code'] as String?,
-        message: j['message'] as String,
-        param: j['param'] as String?,
-        sequenceNumber: j['sequence_number'] as int,
-      );
+  factory ErrorEvent.fromJson(Map<String, dynamic> j) {
+    return ErrorEvent(
+      code: j['code'] as String?,
+      message: j['message'] as String,
+      param: j['param'] as String?,
+      sequenceNumber: j['sequence_number'] as int,
+    );
+  }
 
   final String? code;
   final String message;

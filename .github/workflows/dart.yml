@@ -7,8 +7,8 @@ on:
     branches: ["**"]
 
 jobs:
-  analyze_and_format:
-    name: Format and Analyze
+  format:
+    name: Dart Format
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -25,6 +25,20 @@ jobs:
       - name: Verify formatting
         run: dart format --output=none --set-exit-if-changed .
 
+  analyze:
+    name: Dart Analyze
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Dart SDK
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Install dependencies
+        run: dart pub get
+
       - name: Analyze project source
         run: dart analyze .
-

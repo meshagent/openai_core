@@ -6,11 +6,7 @@ import "sse_client.dart";
 import "dart:convert";
 
 class OpenAIClient {
-  OpenAIClient(
-      {this.apiKey,
-      String baseUrl = "https://api.openai.com/v1/",
-      this.headers,
-      Client? httpClient}) {
+  OpenAIClient({this.apiKey, String baseUrl = "https://api.openai.com/v1/", this.headers, Client? httpClient}) {
     this.baseUrl = Uri.parse(baseUrl);
 
     if (httpClient == null) {
@@ -33,8 +29,7 @@ class OpenAIClient {
     return headers;
   }
 
-  Future<Response> postText(String path, String body,
-      {Map<String, String>? headers}) async {
+  Future<Response> postText(String path, String body, {Map<String, String>? headers}) async {
     if (path.startsWith("/")) {
       path = path.substring(1);
     }
@@ -49,40 +44,27 @@ class OpenAIClient {
     return await Response.fromStream(stream);
   }
 
-  Future<Response> postJson(String path, Map<String, dynamic> body,
-      {Map<String, String>? headers}) async {
+  Future<Response> postJson(String path, Map<String, dynamic> body, {Map<String, String>? headers}) async {
     if (path.startsWith("/")) {
       path = path.substring(1);
     }
     final url = baseUrl.resolve(path);
     final bodyText = jsonEncode(body);
-    return httpClient.post(url,
-        headers: getHeaders({
-          "content-type": "application/json",
-          if (headers != null) ...headers
-        }),
-        body: bodyText);
+    return httpClient.post(url, headers: getHeaders({"content-type": "application/json", if (headers != null) ...headers}), body: bodyText);
   }
 
-  SseClient streamJson(String path, Map<String, dynamic> body,
-      {Map<String, String>? headers}) {
+  SseClient streamJson(String path, Map<String, dynamic> body, {Map<String, String>? headers}) {
     if (path.startsWith("/")) {
       path = path.substring(1);
     }
     final json = utf8.encode(jsonEncode(body));
     final client = SseClient(baseUrl.resolve(path),
-        headers: getHeaders({
-          "content-type": "application/json",
-          if (headers != null) ...headers
-        }),
-        httpClient: httpClient,
-        body: json);
+        headers: getHeaders({"content-type": "application/json", if (headers != null) ...headers}), httpClient: httpClient, body: json);
     return client;
   }
 
   /// POST a JSON body and expose the (chunked) response body as a byte stream.
-  Stream<List<int>> streamJsonData(String path, Map<String, dynamic> body,
-      {Map<String, dynamic>? headers}) async* {
+  Stream<List<int>> streamJsonData(String path, Map<String, dynamic> body, {Map<String, dynamic>? headers}) async* {
     // Clean up the relative path without mutating the parameter (parameters are
     // final in Dart).
     final relative = path.startsWith('/') ? path.substring(1) : path;
@@ -90,11 +72,7 @@ class OpenAIClient {
 
     // Build a streamed HTTP request.
     final req = Request('POST', url)
-      ..headers.addAll(getHeaders({
-            'Content-Type': 'application/json',
-            if (headers != null) ...headers
-          }) ??
-          {})
+      ..headers.addAll(getHeaders({'Content-Type': 'application/json', if (headers != null) ...headers}) ?? {})
       ..body = jsonEncode(body);
 
     final res = await httpClient.send(req);

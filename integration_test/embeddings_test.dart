@@ -22,7 +22,8 @@ void main() {
     // --------------- call the embeddings endpoint -----------------
     final res = await client.createEmbeddings(
       input: 'The food was delicious and the waiter …',
-      model: EmbeddingModel.textEmbedding3Small, // or ada-002 if not yet enabled
+      model:
+          EmbeddingModel.textEmbedding3Small, // or ada-002 if not yet enabled
       encodingFormat: 'float',
       user: 'embeddings-integ-test',
     );
@@ -35,10 +36,12 @@ void main() {
 
     final vec = res.embeddings.first.vector;
     // Typical sizes: 1536 (ada-002), 1024, 512, etc.  > 100 is safe.
-    expect(vec.length, greaterThan(100), reason: 'Vector length seems too small for a text embedding.');
+    expect(vec.length, greaterThan(100),
+        reason: 'Vector length seems too small for a text embedding.');
 
     // Each element should be a finite double.
-    expect(vec.every((v) => v.isFinite), isTrue, reason: 'Vector contains non-finite values.');
+    expect(vec.every((v) => v.isFinite), isTrue,
+        reason: 'Vector contains non-finite values.');
 
     // Usage metadata should be present and sensible.
     expect(res.usage, isNotNull);

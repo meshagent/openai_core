@@ -45,7 +45,6 @@ jobs:
     name: Dart Tests
     runs-on: ubuntu-latest
     # Only run tests if an API key is configured for this repo
-    if: ${{ secrets.OPENAI_API_KEY != '' }}
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     steps:

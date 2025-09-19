@@ -1,3 +1,7 @@
+# 0.3.2
+
+Update readme to show correct version
+
 # 0.3.1
 
 Enhanced package description

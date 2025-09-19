@@ -1,6 +1,6 @@
 name: openai_core
 description: openai support for dart including the responses api, the realtime api, and more.
-version: 0.3.1
+version: 0.3.2
 homepage: https://github.com/meshagent/openai_core
 documentation: https://github.com/meshagent/openai_core
 

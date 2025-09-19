@@ -9,4 +9,5 @@ export "realtime_session_controller.dart";
 export "responses_session.dart";
 export "responses.dart";
 export "openai_client.dart";
-export "vectors.dart";
+export "vector_stores.dart";
+export "files.dart";

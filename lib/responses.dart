@@ -738,10 +738,6 @@ class ComputerCall extends ResponseItem {
       };
 }
 
-abstract class ComputerUsePreviewToolHandler extends ToolCallHandler<ComputerUsePreviewTool, ComputerCall, ComputerCallOutput> {
-  ComputerUsePreviewToolHandler({required super.metadata});
-}
-
 class ComputerCallOutput extends ResponseItem {
   const ComputerCallOutput({
     required this.callId,
@@ -2302,49 +2298,6 @@ class FunctionTool extends Tool {
       };
 }
 
-abstract class ToolHandler<TMeta extends Tool> {
-  ToolHandler({required this.metadata});
-
-  final TMeta metadata;
-
-  Future<ResponseItem?> Function()? getHandler(ResponseEvent event);
-}
-
-abstract class ToolCallHandler<TMeta extends Tool, TInput extends ResponseItem, TOutput extends ResponseItem> extends ToolHandler<TMeta> {
-  ToolCallHandler({required super.metadata});
-
-  Future<TOutput> call(TInput call);
-}
-
-abstract class FunctionToolHandler extends ToolCallHandler<FunctionTool, FunctionCall, FunctionCallOutput> {
-  FunctionToolHandler({required super.metadata});
-
-  Future<String> execute(Map<String, dynamic> arguments);
-
-  String translateError(Object error) {
-    return "The function call failed with the following error: $error";
-  }
-
-  @override
-  Future<ResponseItem?> Function()? getHandler(ResponseEvent event) {
-    if (event is ResponseOutputItemDone && event.item is FunctionCall && (event.item as FunctionCall).name == metadata.name) {
-      return () => call(event.item as FunctionCall);
-    }
-
-    return null;
-  }
-
-  @override
-  Future<FunctionCallOutput> call(FunctionCall call) async {
-    try {
-      final result = await execute(jsonDecode(call.arguments));
-      return call.output(result);
-    } catch (e) {
-      return call.output(translateError(e));
-    }
-  }
-}
-
 /// — file_search
 class FileSearchTool extends Tool {
   const FileSearchTool({
@@ -2369,23 +2322,6 @@ class FileSearchTool extends Tool {
       };
 }
 
-abstract class FileSearchToolHandler extends ToolHandler<FileSearchTool> {
-  FileSearchToolHandler({required super.metadata});
-
-  @override
-  Future<ResponseItem?> Function()? getHandler(ResponseEvent event) {
-    if (event is ResponseFileSearchCallEvent) {
-      return () async {
-        onFileSearch(event);
-        return null;
-      };
-    }
-    return null;
-  }
-
-  Future<void> onFileSearch(ResponseFileSearchCallEvent e);
-}
-
 /// — web_search_preview
 class WebSearchPreviewTool extends Tool {
   const WebSearchPreviewTool({this.searchContextSize, this.userLocation});
@@ -2398,23 +2334,6 @@ class WebSearchPreviewTool extends Tool {
         if (searchContextSize != null) 'search_context_size': searchContextSize!.toJson(),
         if (userLocation != null) 'user_location': userLocation!.toJson(),
       };
-}
-
-abstract class WebSearchToolHandler extends ToolHandler<WebSearchPreviewTool> {
-  WebSearchToolHandler({required super.metadata});
-
-  @override
-  Future<ResponseItem?> Function()? getHandler(ResponseEvent event) {
-    if (event is ResponseWebSearchCallEvent) {
-      return () async {
-        onWebSearch(event);
-        return null;
-      };
-    }
-    return null;
-  }
-
-  Future<void> onWebSearch(ResponseWebSearchCallEvent e);
 }
 
 /// — computer_use_preview
@@ -2465,23 +2384,6 @@ class McpTool extends Tool {
       };
 }
 
-abstract class McpToolHandler extends ToolHandler<McpTool> {
-  McpToolHandler({required super.metadata});
-
-  @override
-  Future<ResponseItem?> Function()? getHandler(ResponseEvent event) {
-    if (event is ResponseMcpCallEvent) {
-      return () async {
-        onMcpCall(event);
-        return null;
-      };
-    }
-    return null;
-  }
-
-  Future<void> onMcpCall(ResponseMcpCallEvent e);
-}
-
 /// — code_interpreter
 class CodeInterpreterTool extends Tool {
   const CodeInterpreterTool({required this.container});
@@ -2489,23 +2391,6 @@ class CodeInterpreterTool extends Tool {
 
   @override
   Map<String, dynamic> toJson() => {'type': 'code_interpreter', 'container': container.toJson()};
-}
-
-abstract class CodeInterpreterToolHandler extends ToolHandler<CodeInterpreterTool> {
-  CodeInterpreterToolHandler({required super.metadata});
-
-  @override
-  Future<ResponseItem?> Function()? getHandler(ResponseEvent event) {
-    if (event is ResponseCodeInterpreterCallEvent) {
-      return () async {
-        onCodeInterpreterCall(event);
-        return null;
-      };
-    }
-    return null;
-  }
-
-  Future<void> onCodeInterpreterCall(ResponseCodeInterpreterCallEvent e);
 }
 
 /// — image_generation
@@ -2547,45 +2432,11 @@ class ImageGenerationTool extends Tool {
       };
 }
 
-abstract class ImageGenerationToolHandler extends ToolHandler {
-  ImageGenerationToolHandler({required super.metadata});
-
-  @override
-  Future<ResponseItem?> Function()? getHandler(ResponseEvent event) {
-    if (event is ResponseImageGenerationCallEvent) {
-      return () async {
-        onImageGenerationCall(event);
-        return null;
-      };
-    }
-    return null;
-  }
-
-  Future<void> onImageGenerationCall(ResponseImageGenerationCallEvent e);
-}
-
 /// — local_shell
 class LocalShellTool extends Tool {
   const LocalShellTool();
   @override
   Map<String, dynamic> toJson() => {'type': 'local_shell'};
-}
-
-abstract class LocalShellToolHandler extends ToolCallHandler<LocalShellTool, LocalShellCall, LocalShellCallOutput> {
-  LocalShellToolHandler({required super.metadata});
-
-  @override
-  Future<ResponseItem?> Function()? getHandler(ResponseEvent event) {
-    if (event is LocalShellCall) {
-      return () async {
-        onLocalShellToolCall(event as LocalShellCall);
-        return null;
-      };
-    }
-    return null;
-  }
-
-  Future<LocalShellCallOutput> onLocalShellToolCall(LocalShellCall e);
 }
 
 /// Fallback for bespoke tool types.

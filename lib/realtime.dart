@@ -712,7 +712,7 @@ abstract class RealtimeEvent {
 
       /* ── server → client : generic error ─────────────────────────────── */
       case 'error':
-        return ErrorEvent.fromJson(j);
+        return RealtimeErrorEvent.fromJson(j);
 
       /* ── unknown / future-proofing ───────────────────────────────────── */
       default:
@@ -1339,14 +1339,14 @@ class RealtimeErrorInfo {
 }
 
 /* ---------- error event ---------- */
-class ErrorEvent extends RealtimeEvent {
-  ErrorEvent({
+class RealtimeErrorEvent extends RealtimeEvent {
+  RealtimeErrorEvent({
     required this.eventId, // server-side event id
     required this.error, // detailed error info
   }) : super('error');
 
   /* factory (JSON → object) */
-  factory ErrorEvent.fromJson(Map<String, dynamic> j) => ErrorEvent(
+  factory RealtimeErrorEvent.fromJson(Map<String, dynamic> j) => RealtimeErrorEvent(
         eventId: j['event_id'],
         error: RealtimeErrorInfo.fromJson(j['error'] as Map<String, dynamic>),
       );

@@ -138,9 +138,9 @@ Future<void> main() async {
 
 - This is an independent Dart implementation of the OpenAI API.
 
-## ResponsesSession
+## ResponsesSessionController
 
-`ResponsesSession` manages a multi‑turn Responses conversation for you, including automatic tool calling and iterative turns until a final answer is produced.
+`ResponsesSessionController` manages a multi‑turn Responses conversation for you, including automatic tool calling and iterative turns until a final answer is produced.
 
 - Orchestrates turns: builds the next `input` from prior output or `previousResponseId` when `store` is true.
 - Automatic tools: register tool handlers; when the model calls a tool, the session executes your handler and feeds the result back.
@@ -185,7 +185,7 @@ class WeatherTool extends FunctionToolHandler {
 Future<void> main() async {
   final client = OpenAIClient(apiKey: const String.fromEnvironment('OPENAI_API_KEY'));
 
-  final session = ResponsesSession(
+  final session = ResponsesSessionController(
     client: client,
     model: ChatModel.gpt4o,
     stream: false, // set true to receive SSE events

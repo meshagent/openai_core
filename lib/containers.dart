@@ -15,7 +15,6 @@ class ContainerExpiresAfter {
   const ContainerExpiresAfter({
     required this.anchor,
     this.minutes,
-    this.seconds,
   });
 
   /// Reference point for expiration (e.g., "last_active_at").
@@ -24,19 +23,14 @@ class ContainerExpiresAfter {
   /// Number of minutes after `anchor` when the container expires.
   final int? minutes;
 
-  /// Some backends may accept seconds—kept optional for forward-compat.
-  final int? seconds;
-
   Map<String, dynamic> toJson() => {
         'anchor': anchor,
         if (minutes != null) 'minutes': minutes,
-        if (seconds != null) 'seconds': seconds,
       };
 
   factory ContainerExpiresAfter.fromJson(Map<String, dynamic> j) => ContainerExpiresAfter(
         anchor: j['anchor'] as String,
         minutes: (j['minutes'] as num?)?.toInt(),
-        seconds: (j['seconds'] as num?)?.toInt(),
       );
 }
 

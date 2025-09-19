@@ -1,3 +1,7 @@
+# 0.3.0
+
+Add file and vector store APIs
+
 # 0.2.0
 
 Add containers API

@@ -31,11 +31,11 @@ class OpenAIRequestException extends OpenAIException {
 
   @override
   String toString() {
-    return "OpenAIRequestException: statusCode $statusCode, code: $code, param: $param, body: $bodyPreview";
+    return "OpenAIRequestException: statusCode $statusCode, code: $code, param: $param, message: $message, body: $bodyPreview";
   }
 
   /* Factory that inspects the HTTP response / JSON body */
-  static Future<OpenAIRequestException> fromHttpResponse(http.Response r) async {
+  static OpenAIRequestException fromHttpResponse(http.Response r) {
     try {
       final obj = jsonDecode(r.body) as Map<String, dynamic>;
       if (obj.containsKey('error') && obj['error'] is Map) {

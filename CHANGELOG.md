@@ -1,3 +1,7 @@
+# 0.3.1
+
+Enhanced package description
+
 # 0.3.0
 
 Add file and vector store APIs

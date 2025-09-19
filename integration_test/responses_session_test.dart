@@ -33,7 +33,8 @@ class WeatherTool extends FunctionToolHandler {
             }));
 
   @override
-  Future<String> execute(Map<String, dynamic> arguments) async {
+  Future<String> execute(ResponsesSessionController controller,
+      Map<String, dynamic> arguments) async {
     handlerCalled = true;
     final city = arguments['city'] as String;
     final tempC = 22;
@@ -58,7 +59,8 @@ class DontCallTool extends FunctionToolHandler {
             }));
 
   @override
-  Future<String> execute(Map<String, dynamic> arguments) async {
+  Future<String> execute(ResponsesSessionController controller,
+      Map<String, dynamic> arguments) async {
     return "";
   }
 }
@@ -67,7 +69,7 @@ class DummyImageGenerationToolHandler extends ImageGenerationToolHandler {
   DummyImageGenerationToolHandler({required super.metadata});
 
   @override
-  Future<void> onImageGenerationCall(
+  Future<void> onImageGenerationCall(ResponsesSessionController controller,
       ResponseImageGenerationCallEvent e) async {}
 }
 
@@ -88,7 +90,7 @@ void main() {
     final tool = WeatherTool();
     final abort = DontCallTool();
 
-    final session = ResponsesSession(
+    final session = ResponsesSessionController(
         client: client,
         tools: [tool, abort],
         // Tell the model it *must* use the tool.
@@ -130,7 +132,7 @@ void main() {
 
     final tool = WeatherTool();
 
-    final session = ResponsesSession(
+    final session = ResponsesSessionController(
         client: client,
         tools: [tool],
         // Tell the model it *must* use the tool.
@@ -168,7 +170,7 @@ void main() {
 
     var tool = WeatherTool();
 
-    final session = ResponsesSession(
+    final session = ResponsesSessionController(
         client: client,
         tools: [tool],
         model: ChatModel.gpt4o, // or any model that supports tool calls
@@ -204,7 +206,7 @@ void main() {
 
     var tool = WeatherTool();
 
-    final session = ResponsesSession(
+    final session = ResponsesSessionController(
         client: client,
         tools: [tool],
         model: ChatModel.gpt4o, // or any model that supports tool calls
@@ -236,7 +238,7 @@ void main() {
 
       final client = OpenAIClient(apiKey: apiKey);
 
-      final session = ResponsesSession(
+      final session = ResponsesSessionController(
           client: client,
           tools: [
             DummyImageGenerationToolHandler(
@@ -287,7 +289,7 @@ void main() {
 
       final client = OpenAIClient(apiKey: apiKey);
 
-      final session = ResponsesSession(
+      final session = ResponsesSessionController(
           client: client,
           tools: [
             DummyImageGenerationToolHandler(
@@ -371,7 +373,7 @@ void main() {
         ),
       ]);
 
-      final session = ResponsesSession(
+      final session = ResponsesSessionController(
         client: client,
         model: ChatModel.gpt4o, // any GPT-4o variant that supports vision
         stream: false, // easier: single blocking call, no SSE

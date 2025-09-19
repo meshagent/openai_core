@@ -1,5 +1,5 @@
 import 'dart:async';
-
+import 'dart:convert';
 import 'common.dart';
 import 'exceptions.dart';
 import 'openai_client.dart';
@@ -17,8 +17,8 @@ class MissingToolException extends OpenAIException {
   final String name;
 }
 
-class ResponsesSession {
-  ResponsesSession(
+class ResponsesSessionController {
+  ResponsesSessionController(
       {required this.client,
       this.background,
       this.input,
@@ -221,12 +221,12 @@ class ResponsesSession {
     _pendingOutputs.clear();
   }
 
-  Future<void> _handle(ResponseEvent input, Future<ResponseItem?> Function() handler) async {
+  Future<void> _handle(ResponseEvent input, Future<ResponseItem?> Function(ResponsesSessionController) handler) async {
     _registerPendingOutput(input);
 
     didBeginHandling(input);
 
-    final output = await handler();
+    final output = await handler(this);
     if (output != null) {
       _addLocalOutput(input, output);
     } else {
@@ -285,4 +285,153 @@ class ResponsesSession {
 
     return response;
   }
+}
+
+abstract class ToolHandler<TMeta extends Tool> {
+  ToolHandler({required this.metadata});
+
+  final TMeta metadata;
+
+  Future<ResponseItem?> Function(ResponsesSessionController)? getHandler(ResponseEvent event);
+}
+
+abstract class ToolCallHandler<TMeta extends Tool, TInput extends ResponseItem, TOutput extends ResponseItem> extends ToolHandler<TMeta> {
+  ToolCallHandler({required super.metadata});
+
+  Future<TOutput> call(ResponsesSessionController controller, TInput call);
+}
+
+abstract class FunctionToolHandler extends ToolCallHandler<FunctionTool, FunctionCall, FunctionCallOutput> {
+  FunctionToolHandler({required super.metadata});
+
+  Future<String> execute(ResponsesSessionController controller, Map<String, dynamic> arguments);
+
+  String translateError(Object error) {
+    return "The function call failed with the following error: $error";
+  }
+
+  @override
+  Future<ResponseItem?> Function(ResponsesSessionController)? getHandler(ResponseEvent event) {
+    if (event is ResponseOutputItemDone && event.item is FunctionCall && (event.item as FunctionCall).name == metadata.name) {
+      return (controller) => call(controller, event.item as FunctionCall);
+    }
+
+    return null;
+  }
+
+  @override
+  Future<FunctionCallOutput> call(ResponsesSessionController controller, FunctionCall call) async {
+    try {
+      final result = await execute(controller, jsonDecode(call.arguments));
+      return call.output(result);
+    } catch (e) {
+      return call.output(translateError(e));
+    }
+  }
+}
+
+abstract class FileSearchToolHandler extends ToolHandler<FileSearchTool> {
+  FileSearchToolHandler({required super.metadata});
+
+  @override
+  Future<ResponseItem?> Function(ResponsesSessionController)? getHandler(ResponseEvent event) {
+    if (event is ResponseFileSearchCallEvent) {
+      return (controller) async {
+        onFileSearch(controller, event);
+        return null;
+      };
+    }
+    return null;
+  }
+
+  Future<void> onFileSearch(ResponsesSessionController controller, ResponseFileSearchCallEvent e);
+}
+
+abstract class WebSearchToolHandler extends ToolHandler<WebSearchPreviewTool> {
+  WebSearchToolHandler({required super.metadata});
+
+  @override
+  Future<ResponseItem?> Function(ResponsesSessionController)? getHandler(ResponseEvent event) {
+    if (event is ResponseWebSearchCallEvent) {
+      return (controller) async {
+        onWebSearch(controller, event);
+        return null;
+      };
+    }
+    return null;
+  }
+
+  Future<void> onWebSearch(ResponsesSessionController controller, ResponseWebSearchCallEvent e);
+}
+
+abstract class McpToolHandler extends ToolHandler<McpTool> {
+  McpToolHandler({required super.metadata});
+
+  @override
+  Future<ResponseItem?> Function(ResponsesSessionController)? getHandler(ResponseEvent event) {
+    if (event is ResponseMcpCallEvent) {
+      return (controller) async {
+        onMcpCall(controller, event);
+        return null;
+      };
+    }
+    return null;
+  }
+
+  Future<void> onMcpCall(ResponsesSessionController controller, ResponseMcpCallEvent e);
+}
+
+abstract class CodeInterpreterToolHandler extends ToolHandler<CodeInterpreterTool> {
+  CodeInterpreterToolHandler({required super.metadata});
+
+  @override
+  Future<ResponseItem?> Function(ResponsesSessionController)? getHandler(ResponseEvent event) {
+    if (event is ResponseCodeInterpreterCallEvent) {
+      return (controller) async {
+        onCodeInterpreterCall(controller, event);
+        return null;
+      };
+    }
+    return null;
+  }
+
+  Future<void> onCodeInterpreterCall(ResponsesSessionController controller, ResponseCodeInterpreterCallEvent e);
+}
+
+abstract class ImageGenerationToolHandler extends ToolHandler {
+  ImageGenerationToolHandler({required super.metadata});
+
+  @override
+  Future<ResponseItem?> Function(ResponsesSessionController)? getHandler(ResponseEvent event) {
+    if (event is ResponseImageGenerationCallEvent) {
+      return (controller) async {
+        onImageGenerationCall(controller, event);
+        return null;
+      };
+    }
+    return null;
+  }
+
+  Future<void> onImageGenerationCall(ResponsesSessionController controller, ResponseImageGenerationCallEvent e);
+}
+
+abstract class LocalShellToolHandler extends ToolCallHandler<LocalShellTool, LocalShellCall, LocalShellCallOutput> {
+  LocalShellToolHandler({required super.metadata});
+
+  @override
+  Future<ResponseItem?> Function(ResponsesSessionController)? getHandler(ResponseEvent event) {
+    if (event is LocalShellCall) {
+      return (controller) async {
+        onLocalShellToolCall(controller, event as LocalShellCall);
+        return null;
+      };
+    }
+    return null;
+  }
+
+  Future<LocalShellCallOutput> onLocalShellToolCall(ResponsesSessionController controller, LocalShellCall e);
+}
+
+abstract class ComputerUsePreviewToolHandler extends ToolCallHandler<ComputerUsePreviewTool, ComputerCall, ComputerCallOutput> {
+  ComputerUsePreviewToolHandler({required super.metadata});
 }

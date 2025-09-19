@@ -24,9 +24,6 @@ abstract class RealtimeSessionController {
         }
         _tools[tool.metadata.name] = tool;
       }
-      for (final tool in initialTools) {
-        tool.didAttach(this);
-      }
     }
 
     _ready.future.then((_) {
@@ -46,6 +43,14 @@ abstract class RealtimeSessionController {
     } else if (event is SessionCreatedEvent) {
       _session = event.session;
       _ready.complete();
+    }
+
+    for (final handler in tools) {
+      final h = handler.getHandler(event);
+      if (h != null) {
+        // Handle events async
+        h(this);
+      }
     }
   }
 
@@ -70,7 +75,6 @@ abstract class RealtimeSessionController {
 
     for (final tool in tools) {
       this._tools[tool.metadata.name] = tool;
-      tool.didAttach(this);
     }
     updateSession(RealtimeSessionUpdate(tools: [...this._tools.values.map((t) => t.metadata)]));
   }
@@ -86,7 +90,6 @@ abstract class RealtimeSessionController {
 
     for (final tool in tools) {
       this._tools.remove(tool.metadata.name);
-      tool.didDetach(this);
     }
 
     updateSession(RealtimeSessionUpdate(tools: [...this._tools.values.map((t) => t.metadata)]));
@@ -100,9 +103,6 @@ abstract class RealtimeSessionController {
   void dispose() {
     _sub.cancel();
     serverEventsController.close();
-    for (final tool in tools) {
-      tool.didDetach(this);
-    }
   }
 
   final clientEventsController = StreamController<RealtimeEvent>.broadcast();
@@ -121,52 +121,45 @@ abstract class RealtimeSessionController {
   }
 }
 
-abstract class RealtimeFunctionToolHandler {
-  RealtimeFunctionToolHandler({required this.metadata});
+abstract class RealtimeToolHandler<TMetadata> {
+  RealtimeToolHandler({required this.metadata});
 
-  final RealtimeFunctionTool metadata;
+  final TMetadata metadata;
 
-  Future<RealtimeFunctionCallOutput> call(RealtimeFunctionCall call);
+  Future<void> Function(RealtimeSessionController controller)? getHandler(RealtimeEvent e);
+}
 
-  Map<RealtimeSessionController, StreamSubscription> _attachedTo = {};
+abstract class RealtimeFunctionToolHandler extends RealtimeToolHandler<RealtimeFunctionTool> {
+  RealtimeFunctionToolHandler({required super.metadata});
 
-  void didAttach(RealtimeSessionController controller) {
-    if (!_attachedTo.containsKey(controller)) {
-      _attachedTo[controller] = controller.serverEvents.listen((e) async {
-        switch (e) {
-          case RealtimeResponseOutputItemDoneEvent(item: RealtimeFunctionCall()):
-            final item = e.item as RealtimeFunctionCall;
-            if (item.name == metadata.name) {
-              final output = await call(item);
+  @override
+  Future<void> Function(RealtimeSessionController controller)? getHandler(RealtimeEvent e) {
+    switch (e) {
+      case RealtimeResponseOutputItemDoneEvent(item: RealtimeFunctionCall()):
+        return (controller) async {
+          final item = e.item as RealtimeFunctionCall;
+          if (item.name == metadata.name) {
+            try {
+              final output = await _doCall(item);
               controller.send(RealtimeConversationItemCreateEvent(item: output, previousItemId: item.id));
               controller.send(RealtimeResponseCreateEvent(response: RealtimeResponse()));
+            } catch (err) {
+              controller.send(RealtimeConversationItemCreateEvent(
+                  item: RealtimeFunctionCallOutput(callId: item.callId, output: "Error: ${err}", status: "failed"),
+                  previousItemId: item.id));
+              controller.send(RealtimeResponseCreateEvent(response: RealtimeResponse()));
             }
-        }
-      });
-    } else {
-      throw ArgumentError("Already listening to controller");
+          }
+        };
+      default:
+        return null;
     }
   }
 
-  void didDetach(RealtimeSessionController controller) {
-    final sub = _attachedTo.remove(controller);
-    sub!.cancel();
-  }
-}
-
-typedef RealtimeFunctionToolDelegateCallback = Future<String> Function(Map<String, dynamic> arguments);
-
-class RealtimeFunctionToolDelegate extends RealtimeFunctionToolHandler {
-  RealtimeFunctionToolDelegate({
-    required super.metadata,
-    required this.handler,
-  });
-
-  RealtimeFunctionToolDelegateCallback handler;
-
-  @override
-  Future<RealtimeFunctionCallOutput> call(RealtimeFunctionCall call) async {
-    final result = await handler(jsonDecode(call.arguments));
+  Future<RealtimeFunctionCallOutput> _doCall(RealtimeFunctionCall call) async {
+    final result = await execute(jsonDecode(call.arguments));
     return call.output(result);
   }
+
+  Future<String> execute(Map<String, dynamic> arguments);
 }

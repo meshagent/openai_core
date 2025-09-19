@@ -1,3 +1,7 @@
+# 0.2.0
+
+Add containers API
+
 # 0.1.2
 
 Update supported platforms

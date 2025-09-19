@@ -1,6 +1,6 @@
 name: openai_core
 description: openai support for dart
-version: 0.1.2
+version: 0.2.0
 homepage: https://github.com/meshagent/openai_core
 documentation: https://github.com/meshagent/openai_core
 

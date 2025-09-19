@@ -1,3 +1,7 @@
+# 0.1.2
+
+Update supported platforms
+
 # 0.1.1
 
 Update package metadata

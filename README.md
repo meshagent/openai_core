@@ -1,4 +1,4 @@
-# Dart OpenAI
+# OpenAI Core
 
 A lightweight, idiomatic Dart client for the OpenAI API. It targets Dart 3+, works in CLI and Flutter apps, and supports the modern Responses API, streaming, embeddings, images, and text‑to‑speech.
 
@@ -8,7 +8,8 @@ A lightweight, idiomatic Dart client for the OpenAI API. It targets Dart 3+, wor
 - Embeddings: generate vectors for text and tokens
 - Images: generation, edits, and variations
 - Audio (TTS): create speech or stream audio/events
-- Simple HTTP client with pluggable base URL and headers
+- Realtime API: connect to the realtime API via websockets or webrtc (see openai_webrtc)
+- ResponsesController / RealtimeSessionController: high level API for managing context and sessions
 
 ## Install
 

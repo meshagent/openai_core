@@ -1,5 +1,6 @@
 export "audio.dart";
 export "common.dart";
+export "containers.dart";
 export "embeddings.dart";
 export "exceptions.dart";
 export "images.dart";

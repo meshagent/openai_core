@@ -1,5 +1,5 @@
-name: openai
-description: support for openai 
+name: openai_core
+description: openai support for dart
 version: 0.0.1
 homepage: https://github.com
 documentation: https://github.com

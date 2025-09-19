@@ -508,6 +508,10 @@ class RealtimeFunctionTool {
     this.description,
   });
 
+  bool matches(RealtimeFunctionTool tool) {
+    return tool.name == this.name;
+  }
+
   final String name;
   final Map<String, dynamic> parameters;
   final String? description;

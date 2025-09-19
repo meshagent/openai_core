@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
-import 'package:openai/responses.dart';
+import 'responses.dart';
 
 /// Simple SSE client for Dart or Flutter (dart:io).
 class SseClient {

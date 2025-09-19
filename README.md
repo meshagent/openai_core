@@ -1,4 +1,4 @@
-# Dart OpenAI
+# OpenAI Core
 
 A lightweight, idiomatic Dart client for the OpenAI API. It targets Dart 3+, works in CLI and Flutter apps, and supports the modern Responses API, streaming, embeddings, images, and text‑to‑speech.
 
@@ -8,7 +8,8 @@ A lightweight, idiomatic Dart client for the OpenAI API. It targets Dart 3+, wor
 - Embeddings: generate vectors for text and tokens
 - Images: generation, edits, and variations
 - Audio (TTS): create speech or stream audio/events
-- Simple HTTP client with pluggable base URL and headers
+- Realtime API: connect to the realtime API via websockets or webrtc (see openai_webrtc)
+- ResponsesController / RealtimeSessionController: high level API for managing context and sessions
 
 ## Install
 
@@ -28,8 +29,7 @@ export OPENAI_API_KEY=sk-your-key
 ## Quick Start
 
 ```dart
-import 'openai_client.dart';
-import 'responses.dart';
+import 'openai_core/openai_core.dart';
 
 Future<void> main() async {
   final client = OpenAIClient(apiKey: const String.fromEnvironment('OPENAI_API_KEY'));
@@ -56,8 +56,7 @@ Future<void> main() async {
 ## Streaming Responses
 
 ```dart
-import 'openai_client.dart';
-import 'responses.dart';
+import 'openai_core/openai_core.dart';
 
 Future<void> main() async {
   final client = OpenAIClient(apiKey: const String.fromEnvironment('OPENAI_API_KEY'));
@@ -81,8 +80,7 @@ Future<void> main() async {
 ## Embeddings
 
 ```dart
-import 'openai_client.dart';
-import 'embeddings.dart';
+import 'openai_core/openai_core.dart';
 
 Future<void> main() async {
   final client = OpenAIClient(apiKey: const String.fromEnvironment('OPENAI_API_KEY'));
@@ -98,8 +96,7 @@ Future<void> main() async {
 ## Images
 
 ```dart
-import 'openai_client.dart';
-import 'images.dart';
+import 'openai_core/openai_core.dart';
 
 Future<void> main() async {
   final client = OpenAIClient(apiKey: const String.fromEnvironment('OPENAI_API_KEY'));
@@ -113,8 +110,7 @@ Future<void> main() async {
 ## Audio (Text‑to‑Speech)
 
 ```dart
-import 'openai_client.dart';
-import 'audio.dart';
+import 'openai_core/openai_core.dart';
 
 Future<void> main() async {
   final client = OpenAIClient(apiKey: const String.fromEnvironment('OPENAI_API_KEY'));
@@ -151,9 +147,7 @@ Example: function tool + single call
 
 ```dart
 import 'dart:convert';
-import 'openai_client.dart';
-import 'responses.dart';
-import 'responses_session.dart';
+import 'openai_core/openai_core.dart';
 
 // Define a tool by extending FunctionToolHandler.
 class WeatherTool extends FunctionToolHandler {

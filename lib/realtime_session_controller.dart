@@ -140,7 +140,7 @@ abstract class RealtimeFunctionToolHandler extends RealtimeToolHandler<RealtimeF
           final item = e.item as RealtimeFunctionCall;
           if (item.name == metadata.name) {
             try {
-              final output = await _doCall(item);
+              final output = await _doCall(controller, item);
               controller.send(RealtimeConversationItemCreateEvent(item: output, previousItemId: item.id));
               controller.send(RealtimeResponseCreateEvent(response: RealtimeResponse()));
             } catch (err) {
@@ -156,10 +156,10 @@ abstract class RealtimeFunctionToolHandler extends RealtimeToolHandler<RealtimeF
     }
   }
 
-  Future<RealtimeFunctionCallOutput> _doCall(RealtimeFunctionCall call) async {
-    final result = await execute(jsonDecode(call.arguments));
+  Future<RealtimeFunctionCallOutput> _doCall(RealtimeSessionController controller, RealtimeFunctionCall call) async {
+    final result = await execute(controller, jsonDecode(call.arguments));
     return call.output(result);
   }
 
-  Future<String> execute(Map<String, dynamic> arguments);
+  Future<String> execute(RealtimeSessionController controller, Map<String, dynamic> arguments);
 }

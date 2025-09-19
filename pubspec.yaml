@@ -1,6 +1,6 @@
 name: openai_core
 description: openai support for dart
-version: 0.0.1
+version: 0.1.0
 homepage: https://github.com
 documentation: https://github.com
 
@@ -9,4 +9,6 @@ environment:
   
 dependencies:
   http: ^1.4.0
+  mime: ^2.0.0
   test: ^1.26.2
+  web_socket_channel: ^3.0.3

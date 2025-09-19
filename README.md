@@ -17,7 +17,7 @@ Add the package to your app. If this isn’t published yet, depend via path or g
 
 ```yaml
 dependencies:
-  openai: ^0.0.1
+  openai_core: ^0.0.1
 ```
 
 Set an API key in your environment (recommended):

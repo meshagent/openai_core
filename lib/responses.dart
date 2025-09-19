@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'images.dart';
+
 import 'common.dart';
 import 'exceptions.dart';
 import 'openai_client.dart';
@@ -185,15 +187,6 @@ enum Truncation with JsonEnum {
   final String value;
 
   static Truncation fromJson(String raw) => JsonEnum.fromJson(values, raw);
-}
-
-enum ImageModeration with JsonEnum {
-  auto('auto');
-
-  const ImageModeration(this.value);
-  final String value;
-
-  static ImageModeration fromJson(String raw) => JsonEnum.fromJson(values, raw);
 }
 
 enum ImageOutputFormat with JsonEnum {

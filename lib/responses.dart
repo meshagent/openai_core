@@ -107,165 +107,152 @@ extension ResponsesAPI on OpenAIClient {
 // Status enums
 // ─────────────────────────────────────────────────────────────────────────────
 
-enum FunctionToolCallStatus with JsonEnum {
-  inProgress('in_progress'),
-  completed('completed'),
-  incomplete('incomplete');
+class FunctionToolCallStatus extends JsonEnum {
+  static const inProgress = FunctionToolCallStatus('in_progress');
+  static const completed = FunctionToolCallStatus('completed');
+  static const incomplete = FunctionToolCallStatus('incomplete');
 
-  const FunctionToolCallStatus(this.value);
-  final String value;
+  const FunctionToolCallStatus(super.value);
 
-  static FunctionToolCallStatus fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static FunctionToolCallStatus fromJson(String raw) => FunctionToolCallStatus(raw);
 }
 
-enum ReasoningOutputStatus with JsonEnum {
-  inProgress('in_progress'),
-  completed('completed'),
-  incomplete('incomplete');
+class ReasoningOutputStatus extends JsonEnum {
+  static const inProgress = ReasoningOutputStatus('in_progress');
+  static const completed = ReasoningOutputStatus('completed');
+  static const incomplete = ReasoningOutputStatus('incomplete');
 
-  const ReasoningOutputStatus(this.value);
-  final String value;
+  const ReasoningOutputStatus(super.value);
 
-  static ReasoningOutputStatus fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static ReasoningOutputStatus fromJson(String raw) => ReasoningOutputStatus(raw);
 }
 
-enum ImageGenerationCallStatus with JsonEnum {
-  inProgress('in_progress'),
-  generating('generating'),
-  completed('completed'),
-  failed('failed'),
-  incomplete('incomplete');
+class ImageGenerationCallStatus extends JsonEnum {
+  static const inProgress = ImageGenerationCallStatus('in_progress');
+  static const generating = ImageGenerationCallStatus('generating');
+  static const completed = ImageGenerationCallStatus('completed');
+  static const failed = ImageGenerationCallStatus('failed');
+  static const incomplete = ImageGenerationCallStatus('incomplete');
 
-  const ImageGenerationCallStatus(this.value);
-  final String value;
+  const ImageGenerationCallStatus(super.value);
 
-  static ImageGenerationCallStatus fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static ImageGenerationCallStatus fromJson(String raw) => ImageGenerationCallStatus(raw);
 }
 
-enum CodeInterpreterToolCallStatus with JsonEnum {
-  inProgress('in_progress'),
-  running('running'),
-  completed('completed'),
-  failed('failed'),
-  incomplete('incomplete');
+class CodeInterpreterToolCallStatus extends JsonEnum {
+  static const inProgress = CodeInterpreterToolCallStatus('in_progress');
+  static const running = CodeInterpreterToolCallStatus('running');
+  static const completed = CodeInterpreterToolCallStatus('completed');
+  static const failed = CodeInterpreterToolCallStatus('failed');
+  static const incomplete = CodeInterpreterToolCallStatus('incomplete');
 
-  const CodeInterpreterToolCallStatus(this.value);
-  final String value;
+  const CodeInterpreterToolCallStatus(super.value);
 
-  static CodeInterpreterToolCallStatus fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static CodeInterpreterToolCallStatus fromJson(String raw) => CodeInterpreterToolCallStatus(raw);
 }
 
-enum LocalShellCallStatus with JsonEnum {
-  inProgress('in_progress'),
-  running('running'),
-  completed('completed'),
-  failed('failed'),
-  incomplete('incomplete');
+class LocalShellCallStatus extends JsonEnum {
+  static const inProgress = LocalShellCallStatus('in_progress');
+  static const running = LocalShellCallStatus('running');
+  static const completed = LocalShellCallStatus('completed');
+  static const failed = LocalShellCallStatus('failed');
+  static const incomplete = LocalShellCallStatus('incomplete');
 
-  const LocalShellCallStatus(this.value);
-  final String value;
+  const LocalShellCallStatus(super.value);
 
-  static LocalShellCallStatus fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static LocalShellCallStatus fromJson(String raw) => LocalShellCallStatus(raw);
 }
 
-enum ImageGenerationBackground with JsonEnum {
-  transparent('transparent'),
-  opaque('opaque'),
-  auto('auto');
+class ImageGenerationBackground extends JsonEnum {
+  static const transparent = ImageGenerationBackground('transparent');
+  static const opaque = ImageGenerationBackground('opaque');
+  static const auto = ImageGenerationBackground('auto');
 
-  const ImageGenerationBackground(this.value);
-  final String value;
+  const ImageGenerationBackground(super.value);
 
-  static ImageGenerationBackground fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static ImageGenerationBackground fromJson(String raw) => ImageGenerationBackground(raw);
 }
 
-enum Truncation with JsonEnum {
-  auto('auto'),
-  disabled('disabled');
+class Truncation extends JsonEnum {
+  static const auto = Truncation('auto');
+  static const disabled = Truncation('disabled');
 
-  const Truncation(this.value);
-  final String value;
+  const Truncation(super.value);
 
-  static Truncation fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static Truncation fromJson(String raw) => Truncation(raw);
 }
 
-enum ImageOutputFormat with JsonEnum {
-  png('png'),
-  webp('webp'),
-  jpeg('jpeg');
+class ImageOutputFormat extends JsonEnum {
+  static const png = ImageOutputFormat('png');
+  static const webp = ImageOutputFormat('webp');
+  static const jpeg = ImageOutputFormat('jpeg');
 
-  const ImageOutputFormat(this.value);
-  final String value;
+  const ImageOutputFormat(super.value);
 
-  static ImageOutputFormat fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static ImageOutputFormat fromJson(String raw) => ImageOutputFormat(raw);
 }
 
-enum ImageOutputQuality with JsonEnum {
-  low('low'),
-  medium('medium'),
-  high('high'),
-  auto('auto');
+class ImageOutputQuality extends JsonEnum {
+  static const low = ImageOutputQuality('low');
+  static const medium = ImageOutputQuality('medium');
+  static const high = ImageOutputQuality('high');
+  static const auto = ImageOutputQuality('auto');
 
-  const ImageOutputQuality(this.value);
-  final String value;
+  const ImageOutputQuality(super.value);
 
-  static ImageOutputQuality fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static ImageOutputQuality fromJson(String raw) => ImageOutputQuality(raw);
 }
 
-enum ImageOutputSize with JsonEnum {
-  auto('auto'),
+class ImageOutputSize extends JsonEnum {
+  static const auto = ImageOutputSize('auto');
   // ── Square sizes (all models) ──────────────────────────────────────────
-  square256('256x256'), // DALL·E-2
-  square512('512x512'), // DALL·E-2
-  square1024('1024x1024'), // all models
+  static const square256 = ImageOutputSize('256x256'); // DALL·E-2
+  static const square512 = ImageOutputSize('512x512'); // DALL·E-2
+  static const square1024 = ImageOutputSize('1024x1024'); // all models
 
   // ── Landscape (width > height) ─────────────────────────────────────────
-  landscape1536x1024('1536x1024'), // gpt-image-1
-  landscape1792x1024('1792x1024'), // DALL·E-3
+  static const landscape1536x1024 = ImageOutputSize('1536x1024'); // gpt-image-1
+  static const landscape1792x1024 = ImageOutputSize('1792x1024'); // DALL·E-3
 
   // ── Portrait (height > width) ─────────────────────────────────────────
-  portrait1024x1536('1024x1536'), // gpt-image-1
-  portrait1024x1792('1024x1792'); // DALL·E-3
+  static const portrait1024x1536 = ImageOutputSize('1024x1536'); // gpt-image-1
+  static const portrait1024x1792 = ImageOutputSize('1024x1792'); // DALL·E-3
 
-  const ImageOutputSize(this.value);
-  final String value;
+  const ImageOutputSize(super.value);
 
-  static ImageOutputSize fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static ImageOutputSize fromJson(String raw) => ImageOutputSize(raw);
 }
 
-enum ServiceTier with JsonEnum {
-  auto('auto'),
-  defaultTier('default'),
-  flex('flex'),
-  other('other');
+class ServiceTier extends JsonEnum {
+  static const auto = ServiceTier('auto');
+  static const defaultTier = ServiceTier('default');
+  static const flex = ServiceTier('flex');
+  static const other = ServiceTier('other');
 
-  const ServiceTier(this.value);
-  final String value;
+  const ServiceTier(super.value);
 
-  static ServiceTier fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static ServiceTier fromJson(String raw) => ServiceTier(raw);
 }
 
-enum ReasoningDetail with JsonEnum {
-  auto('auto'),
-  concise('concise'),
-  detailed('detailed'),
-  other('other');
+class ReasoningDetail extends JsonEnum {
+  static const auto = ReasoningDetail('auto');
+  static const concise = ReasoningDetail('concise');
+  static const detailed = ReasoningDetail('detailed');
+  static const other = ReasoningDetail('other');
 
-  const ReasoningDetail(this.value);
-  final String value;
+  const ReasoningDetail(super.value);
 
-  static ReasoningDetail fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static ReasoningDetail fromJson(String raw) => ReasoningDetail(raw);
 }
 
-enum ReasoningEffort with JsonEnum {
-  low('low'),
-  medium('medium'),
-  high('high');
+class ReasoningEffort extends JsonEnum {
+  static const low = ReasoningEffort('low');
+  static const medium = ReasoningEffort('medium');
+  static const high = ReasoningEffort('high');
 
-  const ReasoningEffort(this.value);
-  final String value;
+  const ReasoningEffort(super.value);
 
-  static ReasoningEffort fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static ReasoningEffort fromJson(String raw) => ReasoningEffort(raw);
 }
 
 class ReasoningOptions {
@@ -1328,53 +1315,49 @@ class IncompleteDetails {
   String toString() => 'IncompleteDetails(reason: $reason)';
 }
 
-enum WebSearchToolCallStatus with JsonEnum {
-  inProgress('in_progress'),
-  searching('searching'),
-  completed('completed'),
-  incomplete('incomplete'),
-  failed('failed'); // fallback for unexpected values
+class WebSearchToolCallStatus extends JsonEnum {
+  static const inProgress = WebSearchToolCallStatus('in_progress');
+  static const searching = WebSearchToolCallStatus('searching');
+  static const completed = WebSearchToolCallStatus('completed');
+  static const incomplete = WebSearchToolCallStatus('incomplete');
+  static const failed = WebSearchToolCallStatus('failed'); // fallback for unexpected values
 
-  const WebSearchToolCallStatus(this.value);
-  final String value;
+  const WebSearchToolCallStatus(super.value);
 
   /// Parse from raw JSON.
-  static WebSearchToolCallStatus fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static WebSearchToolCallStatus fromJson(String raw) => WebSearchToolCallStatus(raw);
 }
 
-enum ImageDetail with JsonEnum {
-  low('low'),
-  auto('auto'),
-  high('high');
+class ImageDetail extends JsonEnum {
+  static const low = ImageDetail('low');
+  static const auto = ImageDetail('auto');
+  static const high = ImageDetail('high');
 
-  const ImageDetail(this.value);
-  final String value;
+  const ImageDetail(super.value);
 
-  static ImageDetail fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static ImageDetail fromJson(String raw) => ImageDetail(raw);
 }
 
-enum FileSearchToolCallStatus with JsonEnum {
-  inProgress('in_progress'),
-  searching('searching'),
-  incomplete('incomplete'),
-  failed('failed'),
-  completed('completed');
+class FileSearchToolCallStatus extends JsonEnum {
+  static const inProgress = FileSearchToolCallStatus('in_progress');
+  static const searching = FileSearchToolCallStatus('searching');
+  static const incomplete = FileSearchToolCallStatus('incomplete');
+  static const failed = FileSearchToolCallStatus('failed');
+  static const completed = FileSearchToolCallStatus('completed');
 
-  const FileSearchToolCallStatus(this.value);
-  final String value;
+  const FileSearchToolCallStatus(super.value);
 
-  static FileSearchToolCallStatus fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static FileSearchToolCallStatus fromJson(String raw) => FileSearchToolCallStatus(raw);
 }
 
-enum ComputerSafetyCheckStatus with JsonEnum {
-  inProgress('in_progress'),
-  completed('completed'),
-  incomplete('incomplete');
+class ComputerSafetyCheckStatus extends JsonEnum {
+  static const inProgress = ComputerSafetyCheckStatus('in_progress');
+  static const completed = ComputerSafetyCheckStatus('completed');
+  static const incomplete = ComputerSafetyCheckStatus('incomplete');
 
-  const ComputerSafetyCheckStatus(this.value);
-  final String value;
+  const ComputerSafetyCheckStatus(super.value);
 
-  static ComputerSafetyCheckStatus fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static ComputerSafetyCheckStatus fromJson(String raw) => ComputerSafetyCheckStatus(raw);
 }
 
 abstract class Input {
@@ -1421,15 +1404,14 @@ class ResponseInputItems extends Input {
   String toString() => 'ResponseInputItems(len=${items.length})';
 }
 
-enum ComputerResultStatus with JsonEnum {
-  inProgress('in_progress'),
-  completed('completed'),
-  incomplete('incomplete');
+class ComputerResultStatus extends JsonEnum {
+  static const inProgress = ComputerResultStatus('in_progress');
+  static const completed = ComputerResultStatus('completed');
+  static const incomplete = ComputerResultStatus('incomplete');
 
-  const ComputerResultStatus(this.value);
-  final String value;
+  const ComputerResultStatus(super.value);
 
-  static ComputerResultStatus fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static ComputerResultStatus fromJson(String raw) => ComputerResultStatus(raw);
 }
 
 abstract class ResponseContent {
@@ -1839,16 +1821,15 @@ class LocalShellAction {
       };
 }
 
-enum SearchContextSize with JsonEnum {
-  low('low'),
-  medium('medium'),
-  high('high'),
-  other('other');
+class SearchContextSize extends JsonEnum {
+  static const low = SearchContextSize('low');
+  static const medium = SearchContextSize('medium');
+  static const high = SearchContextSize('high');
+  static const other = SearchContextSize('other');
 
-  const SearchContextSize(this.value);
-  final String value;
+  const SearchContextSize(super.value);
 
-  static SearchContextSize fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static SearchContextSize fromJson(String raw) => SearchContextSize(raw);
 }
 
 class UserLocation {
@@ -4021,21 +4002,21 @@ class ErrorEvent extends ResponseEvent {
       code: j['code'] as String?,
       message: j['message'] as String,
       param: j['param'] as String?,
-      sequenceNumber: j['sequence_number'] as int,
+      sequenceNumber: j['sequence_number'] as int?,
     );
   }
 
   final String? code;
   final String message;
   final String? param;
-  final int sequenceNumber;
+  final int? sequenceNumber;
 
   @override
   Map<String, dynamic> toJson() => {
         'type': type, // "error"
-        'code': code,
+        if (code != null) 'code': code,
         'message': message,
-        'param': param,
-        'sequence_number': sequenceNumber,
+        if (param != null) 'param': param,
+        if (sequenceNumber != null) 'sequence_number': sequenceNumber,
       };
 }

@@ -78,14 +78,14 @@ class OtherChunkingStrategy extends ChunkingStrategy {
 
 /* ── Vector Store objects ─────────────────────────────────────────────────── */
 
-enum VectorStoreStatus with JsonEnum {
-  expired('expired'),
-  inProgress('in_progress'),
-  completed('completed');
+class VectorStoreStatus extends JsonEnum {
+  static const expired = VectorStoreStatus('expired');
+  static const inProgress = VectorStoreStatus('in_progress');
+  static const completed = VectorStoreStatus('completed');
 
-  const VectorStoreStatus(this.value);
-  final String value;
-  static VectorStoreStatus fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  const VectorStoreStatus(super.value);
+
+  static VectorStoreStatus fromJson(String raw) => VectorStoreStatus(raw);
 }
 
 class VectorStoreFileCounts {
@@ -209,15 +209,15 @@ class VectorStoreList {
 
 /* ── Vector Store files ──────────────────────────────────────────────────── */
 
-enum VectorStoreFileStatus with JsonEnum {
-  inProgress('in_progress'),
-  completed('completed'),
-  cancelled('cancelled'),
-  failed('failed');
+class VectorStoreFileStatus extends JsonEnum {
+  static const inProgress = VectorStoreFileStatus('in_progress');
+  static const completed = VectorStoreFileStatus('completed');
+  static const cancelled = VectorStoreFileStatus('cancelled');
+  static const failed = VectorStoreFileStatus('failed');
 
-  const VectorStoreFileStatus(this.value);
-  final String value;
-  static VectorStoreFileStatus fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  const VectorStoreFileStatus(super.value);
+
+  static VectorStoreFileStatus fromJson(String raw) => VectorStoreFileStatus(raw);
 }
 
 class VectorStoreFileError {
@@ -292,15 +292,15 @@ class VectorStoreFileList {
 
 /* ── Vector Store file batches ───────────────────────────────────────────── */
 
-enum VectorStoreFileBatchStatus with JsonEnum {
-  inProgress('in_progress'),
-  completed('completed'),
-  cancelled('cancelled'),
-  failed('failed');
+class VectorStoreFileBatchStatus extends JsonEnum {
+  static const inProgress = VectorStoreFileBatchStatus('in_progress');
+  static const completed = VectorStoreFileBatchStatus('completed');
+  static const cancelled = VectorStoreFileBatchStatus('cancelled');
+  static const failed = VectorStoreFileBatchStatus('failed');
 
-  const VectorStoreFileBatchStatus(this.value);
-  final String value;
-  static VectorStoreFileBatchStatus fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  const VectorStoreFileBatchStatus(super.value);
+
+  static VectorStoreFileBatchStatus fromJson(String raw) => VectorStoreFileBatchStatus(raw);
 }
 
 class VectorStoreFileBatch {

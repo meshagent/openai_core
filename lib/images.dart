@@ -253,51 +253,47 @@ Uint8List _buildMultipartBodyMultiple({
 /*  Image enums (match JsonEnum pattern used elsewhere)                     */
 /* ────────────────────────────────────────────────────────────────────────── */
 
-enum ImageResponseFormat with JsonEnum {
-  url('url'),
-  b64Json('b64_json');
+class ImageResponseFormat extends JsonEnum {
+  static const url = ImageResponseFormat('url');
+  static const b64Json = ImageResponseFormat('b64_json');
 
-  const ImageResponseFormat(this.value);
-  final String value;
+  const ImageResponseFormat(super.value);
 
-  static ImageResponseFormat fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static ImageResponseFormat fromJson(String raw) => ImageResponseFormat(raw);
 }
 
-enum ImageStyle with JsonEnum {
-  vivid('vivid'),
-  natural('natural');
+class ImageStyle extends JsonEnum {
+  static const vivid = ImageStyle('vivid');
+  static const natural = ImageStyle('natural');
 
-  const ImageStyle(this.value);
-  final String value;
+  const ImageStyle(super.value);
 
-  static ImageStyle fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static ImageStyle fromJson(String raw) => ImageStyle(raw);
 }
 
 /* ––– extend an existing enum –––––––––––––––––––––––––––––––––––––––––––– */
 /*  Add “low” to ImageModeration                                            */
-enum ImageModeration with JsonEnum {
-  auto('auto'),
-  low('low');
+class ImageModeration extends JsonEnum {
+  static const auto = ImageModeration('auto');
+  static const low = ImageModeration('low');
 
-  const ImageModeration(this.value);
-  final String value;
+  const ImageModeration(super.value);
 
-  static ImageModeration fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static ImageModeration fromJson(String raw) => ImageModeration(raw);
 }
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /*  ImageGenerationModel (edit / variation endpoints)                        */
 /* ────────────────────────────────────────────────────────────────────────── */
 
-enum ImageGenerationModel with JsonEnum {
+class ImageGenerationModel extends JsonEnum {
   /// Default for edits / variations.
-  dallE2('dall-e-2'),
+  static const dallE2 = ImageGenerationModel('dall-e-2');
 
   /// Supports transparency, quality settings, etc.
-  gptImage1('gpt-image-1');
+  static const gptImage1 = ImageGenerationModel('gpt-image-1');
 
-  const ImageGenerationModel(this.value);
-  final String value;
+  const ImageGenerationModel(super.value);
 
-  static ImageGenerationModel fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static ImageGenerationModel fromJson(String raw) => ImageGenerationModel(raw);
 }

@@ -12,52 +12,50 @@ import 'exceptions.dart';
 import 'openai_client.dart';
 import 'responses.dart';
 
-enum AudioFormat with JsonEnum {
-  pcm16('pcm16'),
-  g711Ulaw('g711_ulaw'),
-  g711Alaw('g711_alaw');
+class AudioFormat extends JsonEnum {
+  static const pcm16 = AudioFormat('pcm16');
+  static const g711Ulaw = AudioFormat('g711_ulaw');
+  static const g711Alaw = AudioFormat('g711_alaw');
 
-  const AudioFormat(this.value);
-  final String value;
-  static AudioFormat fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  const AudioFormat(super.value);
+  static AudioFormat fromJson(String raw) => AudioFormat(raw);
 }
 
-enum NoiseReductionType with JsonEnum {
-  nearField('near_field'),
-  farField('far_field');
+class NoiseReductionType extends JsonEnum {
+  static const nearField = NoiseReductionType('near_field');
+  static const farField = NoiseReductionType('far_field');
 
-  const NoiseReductionType(this.value);
-  final String value;
-  static NoiseReductionType fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  const NoiseReductionType(super.value);
+
+  static NoiseReductionType fromJson(String raw) => NoiseReductionType(raw);
 }
 
-enum TurnDetectionType with JsonEnum {
-  serverVad('server_vad'),
-  semanticVad('semantic_vad');
+class TurnDetectionType extends JsonEnum {
+  static const serverVad = TurnDetectionType('server_vad');
+  static const semanticVad = TurnDetectionType('semantic_vad');
 
-  const TurnDetectionType(this.value);
-  final String value;
-  static TurnDetectionType fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  const TurnDetectionType(super.value);
+  static TurnDetectionType fromJson(String raw) => TurnDetectionType(raw);
 }
 
-enum Eagerness with JsonEnum {
-  low('low'),
-  medium('medium'),
-  high('high'),
-  auto_('auto');
+class Eagerness extends JsonEnum {
+  static const low = Eagerness('low');
+  static const medium = Eagerness('medium');
+  static const high = Eagerness('high');
+  static const auto = Eagerness('auto');
 
-  const Eagerness(this.value);
-  final String value;
-  static Eagerness fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  const Eagerness(super.value);
+
+  static Eagerness fromJson(String raw) => Eagerness(raw);
 }
 
-enum Modality with JsonEnum {
-  audio('audio'),
-  text('text');
+class Modality extends JsonEnum {
+  static const audio = Modality('audio');
+  static const text = Modality('text');
 
-  const Modality(this.value);
-  final String value;
-  static Modality fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  const Modality(super.value);
+
+  static Modality fromJson(String raw) => Modality(raw);
 }
 
 // ── VO object wrappers ───────────────────────────────────────────────────
@@ -380,20 +378,19 @@ class RealtimeTranscriptionSession extends BaseRealtimeSession {
 }
 
 /// Realtime-capable, low-latency models (WebSocket / /realtime/* APIs).
-enum RealtimeModel with JsonEnum {
+class RealtimeModel extends JsonEnum {
   /// Public preview model (speech + text).
-  gpt4oRealtimePreview('gpt-4o-realtime-preview'),
+  static const gpt4oRealtimePreview = RealtimeModel('gpt-4o-realtime-preview');
 
-  gpt4oRealtimePreview_2025_06_03("gpt-4o-realtime-preview-2025-06-03"),
+  static const gpt4oRealtimePreview_2025_06_03 = RealtimeModel("gpt-4o-realtime-preview-2025-06-03");
 
   /// Same architecture, but text-only and slightly cheaper.
-  gpt4oRealtimeMiniPreview('gpt-4o-realtime-mini-preview');
+  static const gpt4oRealtimeMiniPreview = RealtimeModel('gpt-4o-realtime-mini-preview');
 
-  const RealtimeModel(this.value);
-  final String value;
+  const RealtimeModel(super.value);
 
   /// Parses the wire value or throws if it’s an unknown model string.
-  static RealtimeModel fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static RealtimeModel fromJson(String raw) => RealtimeModel(raw);
 }
 
 // ── Extensions on OpenAIClient ────────────────────────────────────────────

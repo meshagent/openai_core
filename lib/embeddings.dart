@@ -95,13 +95,12 @@ class Embedding {
   final int index;
 }
 
-enum EmbeddingModel with JsonEnum {
-  textEmbeddingAda002('text-embedding-ada-002'),
-  textEmbedding3Small('text-embedding-3-small'),
-  textEmbedding3Large('text-embedding-3-large');
+class EmbeddingModel extends JsonEnum {
+  static const textEmbeddingAda002 = EmbeddingModel('text-embedding-ada-002');
+  static const textEmbedding3Small = EmbeddingModel('text-embedding-3-small');
+  static const textEmbedding3Large = EmbeddingModel('text-embedding-3-large');
 
-  const EmbeddingModel(this.value);
-  final String value;
+  const EmbeddingModel(super.value);
 
-  static EmbeddingModel fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static EmbeddingModel fromJson(String raw) => EmbeddingModel(raw);
 }

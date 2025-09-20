@@ -12,28 +12,26 @@ import 'common.dart';
 import 'exceptions.dart';
 import 'openai_client.dart';
 
-enum SortOrder with JsonEnum {
-  asc('asc'),
-  desc('desc');
+class SortOrder extends JsonEnum {
+  static const asc = SortOrder('asc');
+  static const desc = SortOrder('desc');
 
-  const SortOrder(this.value);
-  final String value;
+  const SortOrder(super.value);
 
-  static SortOrder fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static SortOrder fromJson(String raw) => SortOrder(raw);
 }
 
-enum FilePurpose with JsonEnum {
-  assistants('assistants'),
-  batch('batch'),
-  fineTune('fine-tune'),
-  vision('vision'),
-  userData('user_data'),
-  evals('evals');
+class FilePurpose extends JsonEnum {
+  static const assistants = FilePurpose('assistants');
+  static const batch = FilePurpose('batch');
+  static const fineTune = FilePurpose('fine-tune');
+  static const vision = FilePurpose('vision');
+  static const userData = FilePurpose('user_data');
+  static const evals = FilePurpose('evals');
 
-  const FilePurpose(this.value);
-  final String value;
+  const FilePurpose(super.value);
 
-  static FilePurpose fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static FilePurpose fromJson(String raw) => FilePurpose(raw);
 }
 
 class DeletionStatus {

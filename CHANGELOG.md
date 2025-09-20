@@ -1,3 +1,7 @@
+# 0.4.0
+
+JsonEnum changed from enum to class to support custom models / options
+
 # 0.3.2
 
 Update readme to show correct version

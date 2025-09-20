@@ -503,46 +503,43 @@ class TranscriptTextDone extends TranscriptEvent {
 /*  Audio transcription                                                       */
 /* ────────────────────────────────────────────────────────────────────────── */
 
-enum AudioModel with JsonEnum {
-  whisper1('whisper-1'),
-  gpt4oTranscribe('gpt-4o-transcribe'),
-  gpt4oMiniTranscribe('gpt-4o-mini-transcribe');
+class AudioModel extends JsonEnum {
+  static const whisper1 = AudioModel('whisper-1');
+  static const gpt4oTranscribe = AudioModel('gpt-4o-transcribe');
+  static const gpt4oMiniTranscribe = AudioModel('gpt-4o-mini-transcribe');
 
-  const AudioModel(this.value);
-  final String value;
+  const AudioModel(super.value);
 
-  static AudioModel fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static AudioModel fromJson(String raw) => AudioModel(raw);
 }
 /* ────────────────────────────────────────────────────────────────────────── */
 /*  AudioResponseFormat enum                                                 */
 /* ────────────────────────────────────────────────────────────────────────── */
 
-enum AudioResponseFormat with JsonEnum {
-  json('json'),
-  text('text'),
-  srt('srt'),
-  verboseJson('verbose_json'),
-  vtt('vtt');
+class AudioResponseFormat extends JsonEnum {
+  static const json = AudioResponseFormat('json');
+  static const text = AudioResponseFormat('text');
+  static const srt = AudioResponseFormat('srt');
+  static const verboseJson = AudioResponseFormat('verbose_json');
+  static const vtt = AudioResponseFormat('vtt');
 
-  const AudioResponseFormat(this.value);
-  final String value;
+  const AudioResponseFormat(super.value);
 
-  static AudioResponseFormat fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static AudioResponseFormat fromJson(String raw) => AudioResponseFormat(raw);
 }
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /*  Speech (TTS) models                                                      */
 /* ────────────────────────────────────────────────────────────────────────── */
 
-enum SpeechModel with JsonEnum {
-  tts1('tts-1'),
-  tts1Hd('tts-1-hd'),
-  gpt4oMiniTts('gpt-4o-mini-tts');
+class SpeechModel extends JsonEnum {
+  static const tts1 = SpeechModel('tts-1');
+  static const tts1Hd = SpeechModel('tts-1-hd');
+  static const gpt4oMiniTts = SpeechModel('gpt-4o-mini-tts');
 
-  const SpeechModel(this.value);
-  final String value;
+  const SpeechModel(super.value);
 
-  static SpeechModel fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static SpeechModel fromJson(String raw) => SpeechModel(raw);
 }
 
 /* ────────────────────────────────────────────────────────────────────────── */
@@ -554,39 +551,37 @@ enum SpeechModel with JsonEnum {
 /// If OpenAI introduces additional voices later, callers can still pass a
 /// plain `String` in the `voice:` parameter, but these enum values give you
 /// compile-time safety for the known set.
-enum SpeechVoice with JsonEnum {
-  alloy('alloy'),
-  ash('ash'),
-  ballad('ballad'),
-  coral('coral'),
-  echo('echo'),
-  fable('fable'),
-  onyx('onyx'),
-  nova('nova'),
-  sage('sage'),
-  shimmer('shimmer'),
-  verse('verse');
+class SpeechVoice extends JsonEnum {
+  static const alloy = SpeechVoice('alloy');
+  static const ash = SpeechVoice('ash');
+  static const ballad = SpeechVoice('ballad');
+  static const coral = SpeechVoice('coral');
+  static const echo = SpeechVoice('echo');
+  static const fable = SpeechVoice('fable');
+  static const onyx = SpeechVoice('onyx');
+  static const nova = SpeechVoice('nova');
+  static const sage = SpeechVoice('sage');
+  static const shimmer = SpeechVoice('shimmer');
+  static const verse = SpeechVoice('verse');
 
-  const SpeechVoice(this.value);
-  final String value;
+  const SpeechVoice(super.value);
 
-  static SpeechVoice fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static SpeechVoice fromJson(String raw) => SpeechVoice(raw);
 }
 
 /// Audio container for TTS output.
 ///
 /// *Note:* `pcm` is typically a raw 16-bit mono stream; all others are
 /// self-contained files.
-enum SpeechResponseFormat with JsonEnum {
-  mp3('mp3'),
-  opus('opus'),
-  aac('aac'),
-  flac('flac'),
-  wav('wav'),
-  pcm('pcm');
+class SpeechResponseFormat extends JsonEnum {
+  static const mp3 = SpeechResponseFormat('mp3');
+  static const opus = SpeechResponseFormat('opus');
+  static const aac = SpeechResponseFormat('aac');
+  static const flac = SpeechResponseFormat('flac');
+  static const wav = SpeechResponseFormat('wav');
+  static const pcm = SpeechResponseFormat('pcm');
 
-  const SpeechResponseFormat(this.value);
-  final String value;
+  const SpeechResponseFormat(super.value);
 
-  static SpeechResponseFormat fromJson(String raw) => JsonEnum.fromJson(values, raw);
+  static SpeechResponseFormat fromJson(String raw) => SpeechResponseFormat(raw);
 }

@@ -8,6 +8,16 @@ import '../lib/openai_client.dart'; // core SDK
 import '../lib/responses.dart';
 import 'dart:convert';
 
+Future<String> fileToBase64(String filePath) async {
+  final file = File(filePath);
+
+  // Read file as bytes
+  final bytes = await file.readAsBytes();
+
+  // Convert to Base64 string
+  return base64Encode(bytes);
+}
+
 void main() {
   // ---------------------------------------------------------------------------
   // 0. Setup / tear-down
@@ -610,6 +620,155 @@ void main() {
     expect(followUp.status, anyOf(['completed', 'in_progress', 'queued']));
   });
 
+  test('function_tool file round-trip', () async {
+    /* ❶ Ask the model to call the function */
+    final first = await client.createResponse(
+      model: ChatModel.gpt4o,
+      input: const ResponseInputText(
+        'Please call `get_input` and tell me what it returns',
+      ),
+      toolChoice: const ToolChoiceFunction(name: 'get_input'),
+      tools: const [
+        FunctionTool(
+          name: 'get_input',
+          parameters: {'type': 'object', 'properties': {}, 'required': []},
+        ),
+      ],
+    );
+
+    expect(first.error, isNull,
+        reason: 'Initial call failed: ${first.error?.message}');
+
+    /* ❷ Find the FunctionCall item and compute the result */
+    final call = first.output?.whereType<FunctionCall>().firstWhere(
+          (_) => true,
+          orElse: () => throw TestFailure('No function_call emitted.'),
+        );
+
+    /* ❸ Build the FunctionCallOutput item */
+    final outputItem = FunctionCallOutput.file(
+        callId: call!.callId,
+        output: InputFileContent(
+            filename: "sample.pdf",
+            fileData: "data:application/pdf;base64," +
+                await fileToBase64("integration_test/sample.pdf")));
+
+    /* ❹ Send follow-up so the model can continue */
+    final followUp = await client.createResponse(
+      model: ChatModel.gpt4o,
+      previousResponseId: first.id,
+      input: ResponseInputItems([outputItem]),
+    );
+
+    /* ❺ Basic assertions on the follow-up */
+    expect(followUp.error, isNull,
+        reason: 'Follow-up failed: ${followUp.error?.message}');
+    expect(followUp.status, anyOf(['completed', 'in_progress', 'queued']));
+  });
+
+  test('function_tool image round-trip', () async {
+    /* ❶ Ask the model to call the function */
+    final first = await client.createResponse(
+      model: ChatModel.gpt4o,
+      input: const ResponseInputText(
+        'Please call `get_input` and tell me what it returns',
+      ),
+      toolChoice: const ToolChoiceFunction(name: 'get_input'),
+      tools: const [
+        FunctionTool(
+          name: 'get_input',
+          parameters: {'type': 'object', 'properties': {}, 'required': []},
+        ),
+      ],
+    );
+
+    expect(first.error, isNull,
+        reason: 'Initial call failed: ${first.error?.message}');
+
+    /* ❷ Find the FunctionCall item and compute the result */
+    final call = first.output?.whereType<FunctionCall>().firstWhere(
+          (_) => true,
+          orElse: () => throw TestFailure('No function_call emitted.'),
+        );
+
+    final file = File("integration_test/desktop.jpg");
+    final imageUrl =
+        "data:image/jpeg;base64,${base64Encode(await file.readAsBytes())}";
+
+    /* ❸ Build the FunctionCallOutput item */
+    final outputItem = FunctionCallOutput.image(
+        callId: call!.callId,
+        output: InputImageContent(
+          detail: ImageDetail.auto,
+          imageUrl: imageUrl,
+        ));
+
+    /* ❹ Send follow-up so the model can continue */
+    final followUp = await client.createResponse(
+      model: ChatModel.gpt4o,
+      previousResponseId: first.id,
+      input: ResponseInputItems([outputItem]),
+    );
+
+    /* ❺ Basic assertions on the follow-up */
+    expect(followUp.error, isNull,
+        reason: 'Follow-up failed: ${followUp.error?.message}');
+    expect(followUp.status, anyOf(['completed', 'in_progress', 'queued']));
+  });
+
+  test('function_tool list round-trip', () async {
+    /* ❶ Ask the model to call the function */
+    final first = await client.createResponse(
+      model: ChatModel.gpt4o,
+      input: const ResponseInputText(
+        'Please call `get_input` and tell me what it returns',
+      ),
+      toolChoice: const ToolChoiceFunction(name: 'get_input'),
+      tools: const [
+        FunctionTool(
+          name: 'get_input',
+          parameters: {'type': 'object', 'properties': {}, 'required': []},
+        ),
+      ],
+    );
+
+    expect(first.error, isNull,
+        reason: 'Initial call failed: ${first.error?.message}');
+
+    /* ❷ Find the FunctionCall item and compute the result */
+    final call = first.output?.whereType<FunctionCall>().firstWhere(
+          (_) => true,
+          orElse: () => throw TestFailure('No function_call emitted.'),
+        );
+
+    final file = File("integration_test/desktop.jpg");
+    final imageUrl =
+        "data:image/jpeg;base64,${base64Encode(await file.readAsBytes())}";
+
+    /* ❸ Build the FunctionCallOutput item */
+    final outputItem = FunctionCallOutput.list(callId: call!.callId, output: [
+      InputFileContent(
+          filename: "sample.pdf",
+          fileData: "data:application/pdf;base64," +
+              await fileToBase64("integration_test/sample.pdf")),
+      InputImageContent(
+        detail: ImageDetail.auto,
+        imageUrl: imageUrl,
+      )
+    ]);
+
+    /* ❹ Send follow-up so the model can continue */
+    final followUp = await client.createResponse(
+      model: ChatModel.gpt4o,
+      previousResponseId: first.id,
+      input: ResponseInputItems([outputItem]),
+    );
+
+    /* ❺ Basic assertions on the follow-up */
+    expect(followUp.error, isNull,
+        reason: 'Follow-up failed: ${followUp.error?.message}');
+    expect(followUp.status, anyOf(['completed', 'in_progress', 'queued']));
+  });
 // ---------------------------------------------------------------------------
 // streamResponse → run add_two_ints locally → send output back
 // ---------------------------------------------------------------------------

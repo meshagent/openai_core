@@ -933,8 +933,36 @@ class FunctionCallOutput extends ResponseItem {
     this.id,
   });
 
+  const FunctionCallOutput.text({
+    required this.callId,
+    required String output,
+    this.status,
+    this.id,
+  }) : output = output;
+
+  FunctionCallOutput.image({
+    required this.callId,
+    required InputImageContent output,
+    this.status,
+    this.id,
+  }) : output = [output];
+
+  FunctionCallOutput.file({
+    required this.callId,
+    required InputFileContent output,
+    this.status,
+    this.id,
+  }) : output = [output];
+
+  FunctionCallOutput.list({
+    required this.callId,
+    required List<ResponseContent> output,
+    this.status,
+    this.id,
+  }) : output = output;
+
   final String callId;
-  final String output;
+  final dynamic output;
   final FunctionToolCallStatus? status;
   final String? id;
 

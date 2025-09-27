@@ -1,3 +1,7 @@
+# 0.5.0
+
+Add support for returning files, images, and responses content types from tool calls
+
 # 0.4.0
 
 JsonEnum changed from enum to class to support custom models / options

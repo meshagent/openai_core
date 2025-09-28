@@ -180,14 +180,18 @@ abstract class RealtimeTruncation {
 }
 
 class RealtimeTruncationAuto extends RealtimeTruncation {
+  const RealtimeTruncationAuto();
+  @override
   dynamic toJson() {
     return "auto";
   }
 }
 
 class RealtimeTruncationDisabled extends RealtimeTruncation {
+  const RealtimeTruncationDisabled();
+  @override
   dynamic toJson() {
-    return "auto";
+    return "disabled";
   }
 }
 
@@ -196,9 +200,10 @@ class RealtimeTruncationRatio extends RealtimeTruncation {
 
   final double ratio;
 
+  @override
   dynamic toJson() {
     return {
-      "ratio": "ratio",
+      "type": "retention_ratio",
       "retention_ratio": ratio,
     };
   }

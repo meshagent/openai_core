@@ -57,7 +57,7 @@ An analysis of potential challenges and a plan to address them.
 
 ---
 
-### **Phase 1: Foundational Data Model Corrections**
+### **Phase 1 [✅ DONE]: Foundational Data Model Corrections**
 
 _This phase corrects the core data models to align with the GA specification, addressing the most critical structural issues before building upon them._
 
@@ -104,7 +104,7 @@ _This phase corrects the core data models to align with the GA specification, ad
   - Ensure their `fromJson` factories correctly instantiate the new `RealtimeResponse` class.
 - **Depends On:** `Task 1.2`, `Task 1.3`
 
-#### **Task 1.5: Fix `RealtimeTruncation` `toJson` Methods**
+#### **Task 1.5 [✅ DONE]: Fix `RealtimeTruncation` `toJson` Methods**
 
 - **Description:** Correct the bugs in the `toJson` methods of the `RealtimeTruncationDisabled` and `RealtimeTruncationRatio` classes.
 - **Files to Create/Modify:**

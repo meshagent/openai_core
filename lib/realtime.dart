@@ -750,6 +750,8 @@ abstract class RealtimeEvent {
         return InputAudioBufferClearedEvent.fromJson(j);
       case 'input_audio_buffer.speech_started':
         return InputAudioBufferSpeechStartedEvent.fromJson(j);
+      case 'input_audio_buffer.timeout_triggered':
+        return InputAudioBufferTimeoutTriggeredEvent.fromJson(j);
 
       /* ── server → client : response-level ────────────────────────────── */
 
@@ -2995,6 +2997,40 @@ class InputAudioBufferSpeechStoppedEvent extends RealtimeEvent {
   Map<String, dynamic> toJson() => {
         'type': type,
         'event_id': eventId,
+        'audio_end_ms': audioEndMs,
+        'item_id': itemId,
+      };
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  “input_audio_buffer.timeout_triggered” (server → client)                 */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+class InputAudioBufferTimeoutTriggeredEvent extends RealtimeEvent {
+  InputAudioBufferTimeoutTriggeredEvent({
+    required this.eventId,
+    required this.audioStartMs,
+    required this.audioEndMs,
+    required this.itemId,
+  }) : super('input_audio_buffer.timeout_triggered');
+
+  factory InputAudioBufferTimeoutTriggeredEvent.fromJson(Map<String, dynamic> j) => InputAudioBufferTimeoutTriggeredEvent(
+        eventId: j['event_id'] as String,
+        audioStartMs: (j['audio_start_ms'] as num).toInt(),
+        audioEndMs: (j['audio_end_ms'] as num).toInt(),
+        itemId: j['item_id'] as String,
+      );
+
+  final String eventId;
+  final int audioStartMs;
+  final int audioEndMs;
+  final String itemId;
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': type,
+        'event_id': eventId,
+        'audio_start_ms': audioStartMs,
         'audio_end_ms': audioEndMs,
         'item_id': itemId,
       };

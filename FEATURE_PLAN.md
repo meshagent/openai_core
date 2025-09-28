@@ -180,7 +180,7 @@ _This phase adds the missing data models and enhances existing ones to fully sup
 
 _This phase implements the logic for handling new events, corrects existing event definitions, and enables polymorphic session updates._
 
-#### **Task 3.1: Create `InputAudioBufferTimeoutTriggeredEvent`**
+#### **Task 3.1 [✅ DONE]: Create `InputAudioBufferTimeoutTriggeredEvent`**
 
 - **Description:** Add a new event class to handle the `input_audio_buffer.timeout_triggered` server event.
 - **Files to Create/Modify:**

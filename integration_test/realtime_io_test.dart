@@ -76,7 +76,7 @@ void main() {
         );
 
         await wsCtrl.serverEvents
-            .firstWhere((x) => x is ConversationItemCreatedEvent);
+            .firstWhere((x) => x is ConversationItemAddedEvent);
       },
     );
   });

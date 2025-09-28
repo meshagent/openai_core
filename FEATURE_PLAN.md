@@ -83,7 +83,7 @@ _This phase corrects the core data models to align with the GA specification, ad
   - Add the missing `prompt` property, reusing the `Prompt` class from `responses.dart`.
 - **Depends On:** `Task 1.1`
 
-#### **Task 1.3: Create New `RealtimeResponse` Class**
+#### **Task 1.3 [✅ DONE]: Create New `RealtimeResponse` Class**
 
 - **Description:** Create a new class named `RealtimeResponse` that accurately models the server's response object as defined in the `RealtimeResponse` schema.
 - **Files to Create/Modify:**

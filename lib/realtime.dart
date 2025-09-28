@@ -1383,6 +1383,105 @@ class RealtimeResponseCreateEvent extends RealtimeEvent {
       };
 }
 
+class RealtimeResponseStatusDetailsError {
+  const RealtimeResponseStatusDetailsError({this.type, this.code});
+
+  factory RealtimeResponseStatusDetailsError.fromJson(Map<String, dynamic> json) {
+    return RealtimeResponseStatusDetailsError(
+      type: json['type'] as String?,
+      code: json['code'] as String?,
+    );
+  }
+
+  final String? type;
+  final String? code;
+
+  Map<String, dynamic> toJson() => {
+        if (type != null) 'type': type,
+        if (code != null) 'code': code,
+      };
+}
+
+class RealtimeResponseStatusDetails {
+  const RealtimeResponseStatusDetails({this.type, this.reason, this.error});
+
+  factory RealtimeResponseStatusDetails.fromJson(Map<String, dynamic> json) {
+    return RealtimeResponseStatusDetails(
+      type: json['type'] as String?,
+      reason: json['reason'] as String?,
+      error: json['error'] == null ? null : RealtimeResponseStatusDetailsError.fromJson(json['error']),
+    );
+  }
+
+  final String? type;
+  final String? reason;
+  final RealtimeResponseStatusDetailsError? error;
+
+  Map<String, dynamic> toJson() => {
+        if (type != null) 'type': type,
+        if (reason != null) 'reason': reason,
+        if (error != null) 'error': error!.toJson(),
+      };
+}
+
+class RealtimeResponse {
+  const RealtimeResponse({
+    required this.id,
+    required this.object,
+    this.status,
+    this.statusDetails,
+    this.output,
+    this.metadata,
+    this.audio,
+    this.usage,
+    this.conversationId,
+    this.outputModalities,
+    this.maxOutputTokens,
+  });
+
+  factory RealtimeResponse.fromJson(Map<String, dynamic> json) {
+    return RealtimeResponse(
+      id: json['id'] as String,
+      object: json['object'] as String,
+      status: json['status'] as String?,
+      statusDetails: json['status_details'] == null ? null : RealtimeResponseStatusDetails.fromJson(json['status_details']),
+      output: (json['output'] as List?)?.map((item) => RealtimeConversationItem.fromJson(item)).toList(),
+      metadata: json['metadata'] as Map<String, dynamic>?,
+      audio: json['audio'] == null ? null : ResponseAudioOptions.fromJson(json['audio']),
+      usage: json['usage'] == null ? null : Usage.fromJson(json['usage']),
+      conversationId: json['conversation_id'] as String?,
+      outputModalities: (json['output_modalities'] as List?)?.map((m) => Modality.fromJson(m)).toList(),
+      maxOutputTokens: json['max_output_tokens'],
+    );
+  }
+
+  final String id;
+  final String object;
+  final String? status;
+  final RealtimeResponseStatusDetails? statusDetails;
+  final List<RealtimeConversationItem>? output;
+  final Map<String, dynamic>? metadata;
+  final ResponseAudioOptions? audio;
+  final Usage? usage;
+  final String? conversationId;
+  final List<Modality>? outputModalities;
+  final dynamic maxOutputTokens;
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'object': object,
+        if (status != null) 'status': status,
+        if (statusDetails != null) 'status_details': statusDetails!.toJson(),
+        if (output != null) 'output': output!.map((item) => item.toJson()).toList(),
+        if (metadata != null) 'metadata': metadata,
+        if (audio != null) 'audio': audio!.toJson(),
+        if (usage != null) 'usage': usage!.toJson(),
+        if (conversationId != null) 'conversation_id': conversationId,
+        if (outputModalities != null) 'output_modalities': outputModalities!.map((m) => m.toJson()).toList(),
+        if (maxOutputTokens != null) 'max_output_tokens': maxOutputTokens,
+      };
+}
+
 /* ────────────────────────────────────────────────────────────────────────── */
 /*  “output_audio_buffer.clear” – client → server (WebRTC only)              */
 /* ────────────────────────────────────────────────────────────────────────── */

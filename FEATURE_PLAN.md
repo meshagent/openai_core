@@ -176,7 +176,7 @@ _This phase adds the missing data models and enhances existing ones to fully sup
 
 ---
 
-### **Phase 3: Event Handling and Polymorphism**
+### **Phase 3 [✅ DONE]: Event Handling and Polymorphism**
 
 _This phase implements the logic for handling new events, corrects existing event definitions, and enables polymorphic session updates._
 
@@ -230,7 +230,7 @@ _This phase implements the logic for handling new events, corrects existing even
   - In the constructor for `ConversationItemAddedEvent`, change the `super` call from `super('conversation.item.created')` to `super('conversation.item.added')`.
 - **Depends On:** `None`
 
-#### **Task 3.6: Update `SessionUpdateEvent` for Polymorphism**
+#### **Task 3.6 [✅ DONE]: Update `SessionUpdateEvent` for Polymorphism**
 
 - **Description:** Refactor the `SessionUpdateEvent` to support updating both `RealtimeSession` and `RealtimeTranscriptionSession`.
 - **Files to Create/Modify:**

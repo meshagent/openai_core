@@ -942,13 +942,30 @@ class SessionUpdateEvent extends RealtimeEvent {
     required this.session,
   }) : super('session.update');
 
-  factory SessionUpdateEvent.fromJson(Map<String, dynamic> j) => SessionUpdateEvent(
-        eventId: j['event_id'],
-        session: RealtimeSession.fromJson(j['session'] as Map<String, dynamic>),
-      );
+  factory SessionUpdateEvent.fromJson(Map<String, dynamic> j) {
+    final sessionJson = j['session'] as Map<String, dynamic>;
+    final sessionType = sessionJson['type'] as String?;
+
+    final BaseRealtimeSession session;
+    switch (sessionType) {
+      case 'realtime':
+        session = RealtimeSession.fromJson(sessionJson);
+        break;
+      case 'transcription':
+        session = RealtimeTranscriptionSession.fromJson(sessionJson);
+        break;
+      default:
+        throw ArgumentError('Unknown session type "$sessionType" in session.update event');
+    }
+
+    return SessionUpdateEvent(
+      eventId: j['event_id'] as String?,
+      session: session,
+    );
+  }
 
   final String? eventId; // optional client-generated correlation ID
-  final RealtimeSession session;
+  final BaseRealtimeSession session;
 
   @override
   Map<String, dynamic> toJson() => {

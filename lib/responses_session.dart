@@ -203,14 +203,20 @@ class ResponsesSessionController {
       if (input is ResponseInputItems) {
         this.input = ResponseInputItems([
           ...(input as ResponseInputItems).items,
-          if (response.output != null) ...response.output!,
+          if (response.output != null)
+            ...response.output!.where(
+              (element) => element is! Reasoning,
+            ),
           ..._pendingOutputs.values.whereType<ResponseItem>()
         ]);
       } else if (input is ResponseInputText) {
         final text = input as ResponseInputText;
         this.input = ResponseInputItems([
           InputText(role: "user", text: text.text),
-          if (response.output != null) ...response.output!,
+          if (response.output != null)
+            ...response.output!.where(
+              (element) => element is! Reasoning,
+            ),
           ..._pendingOutputs.values.whereType<ResponseItem>()
         ]);
       } else {
@@ -297,8 +303,6 @@ abstract class ToolHandler<TMeta extends Tool> {
 
 abstract class ToolCallHandler<TMeta extends Tool, TInput extends ResponseItem, TOutput extends ResponseItem> extends ToolHandler<TMeta> {
   ToolCallHandler({required super.metadata});
-
-  Future<TOutput> call(ResponsesSessionController controller, TInput call);
 }
 
 abstract class FunctionToolHandler extends ToolCallHandler<FunctionTool, FunctionCall, FunctionCallOutput> {
@@ -313,14 +317,13 @@ abstract class FunctionToolHandler extends ToolCallHandler<FunctionTool, Functio
   @override
   Future<ResponseItem?> Function(ResponsesSessionController)? getHandler(ResponseEvent event) {
     if (event is ResponseOutputItemDone && event.item is FunctionCall && (event.item as FunctionCall).name == metadata.name) {
-      return (controller) => call(controller, event.item as FunctionCall);
+      return (controller) => onFunctionCall(controller, event.item as FunctionCall);
     }
 
     return null;
   }
 
-  @override
-  Future<FunctionCallOutput> call(ResponsesSessionController controller, FunctionCall call) async {
+  Future<FunctionCallOutput> onFunctionCall(ResponsesSessionController controller, FunctionCall call) async {
     try {
       final result = await execute(controller, jsonDecode(call.arguments));
       return call.output(result);

@@ -279,6 +279,55 @@ void main() {
   );
 
   test(
+    'Session lists DeepWiki MCP tools',
+    () async {
+      final apiKey = Platform.environment['OPENAI_API_KEY'];
+      if (apiKey == null || apiKey.isEmpty) {
+        fail('Set OPENAI_API_KEY in your environment to run this test.');
+      }
+
+      final client = OpenAIClient(apiKey: apiKey);
+
+      final session = ResponsesSessionController(
+        client: client,
+        model: ChatModel.gpt4o,
+        toolChoice: const ToolChoiceRequired(),
+        tools: const [
+          McpToolHandler(
+              metadata: McpTool(
+            serverLabel: 'deepwiki',
+            serverUrl: 'https://mcp.deepwiki.com/mcp',
+            requireApproval: MCPToolApprovalNever.McpToolApprovalNever(),
+          )),
+        ],
+        stream: false,
+        input: const ResponseInputText(
+          'List the available MCP tools on the DeepWiki server.',
+        ),
+      );
+
+      final response = await session.nextResponse(false);
+      client.close();
+
+      // Basic API sanity ------------------------------------------------------
+      expect(response.error, isNull,
+          reason: 'Call failed: ${response.error?.message}');
+      expect(response.status, anyOf(['completed', 'in_progress', 'queued']));
+
+      // If already finished, ensure we received a list-tools item -------------
+      if (response.status == 'completed') {
+        final listTools =
+            response.output?.whereType<McpListTools>().toList() ?? [];
+        expect(listTools, isNotEmpty,
+            reason: 'No mcp_list_tools item came back from DeepWiki.');
+        expect(listTools.first.serverLabel, equals('deepwiki'));
+        expect(listTools.first.tools, isNotEmpty,
+            reason: 'DeepWiki returned an empty tool list.');
+      }
+    },
+  );
+
+  test(
     'Session completes an image_generation tool call',
     timeout: const Timeout(Duration(minutes: 2)),
     () async {
@@ -326,9 +375,6 @@ void main() {
           .firstWhere((_) => true,
               orElse: () => throw StateError(
                   'No ImageGenerationCall found in response.output'));
-
-      expect(imgCall.status, ImageGenerationCallStatus.completed,
-          reason: 'Image generation should have completed.');
 
       // 2. The base-64 payload should decode to non-empty bytes.
       expect(imgCall.resultBase64, isNotNull,

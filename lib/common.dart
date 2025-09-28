@@ -106,6 +106,9 @@ class JsonEnum {
 
   @override
   int get hashCode => value.hashCode;
+
+  @override
+  String toString() => value;
 }
 
 class ChatModel extends JsonEnum {

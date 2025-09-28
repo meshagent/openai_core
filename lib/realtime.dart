@@ -708,6 +708,8 @@ abstract class RealtimeEvent {
         return RealtimeConversationItemDeleteEvent.fromJson(j);
       case 'response.create':
         return RealtimeResponseCreateEvent.fromJson(j);
+      case 'response.cancel':
+        return RealtimeResponseCancelEvent.fromJson(j);
 
       case 'output_audio_buffer.clear':
         return OutputAudioBufferClearEvent.fromJson(j);
@@ -1409,6 +1411,34 @@ class RealtimeResponseCreateEvent extends RealtimeEvent {
         'type': type, // "response.create"
         if (eventId != null) 'event_id': eventId,
         'response': response.toJson(),
+      };
+}
+
+/// Client → server event to cancel an in-progress assistant Response.
+/// The server will reply with `response.done` with a status of `cancelled`.
+class RealtimeResponseCancelEvent extends RealtimeEvent {
+  RealtimeResponseCancelEvent({
+    this.eventId,
+    this.responseId,
+  }) : super('response.cancel');
+
+  factory RealtimeResponseCancelEvent.fromJson(Map<String, dynamic> j) => RealtimeResponseCancelEvent(
+        eventId: j['event_id'] as String?,
+        responseId: j['response_id'] as String?,
+      );
+
+  /// Optional client-generated correlation ID.
+  final String? eventId;
+
+  /// ID of a specific response to cancel. If omitted, the server cancels the
+  /// default in-progress response for the conversation.
+  final String? responseId;
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': type, // "response.cancel"
+        if (eventId != null) 'event_id': eventId,
+        if (responseId != null) 'response_id': responseId,
       };
 }
 

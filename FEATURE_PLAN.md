@@ -200,7 +200,7 @@ _This phase implements the logic for handling new events, corrects existing even
   - Add a new case `'conversation.item.input_audio_transcription.segment'` to the `RealtimeEvent.fromJson` factory.
 - **Depends On:** `None`
 
-#### **Task 3.3: Create `RealtimeResponseCancelEvent`**
+#### **Task 3.3 [✅ DONE]: Create `RealtimeResponseCancelEvent`**
 
 - **Description:** Create a new client-side event class to allow developers to cancel an in-progress response.
 - **Files to Create/Modify:**

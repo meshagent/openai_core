@@ -251,7 +251,7 @@ void main() {
         McpTool(
           serverLabel: 'deepwiki',
           serverUrl: 'https://mcp.deepwiki.com/mcp',
-          requireApproval: MCPToolApprovalNever(),
+          requireApproval: MCPToolApprovalNever.McpToolApprovalNever(),
         ),
       ],
     );
@@ -287,7 +287,7 @@ void main() {
         McpTool(
           serverLabel: 'deepwiki',
           serverUrl: 'https://mcp.deepwiki.com/mcp',
-          requireApproval: MCPToolApprovalNever(),
+          requireApproval: MCPToolApprovalNever.McpToolApprovalNever(),
         ),
       ],
     );

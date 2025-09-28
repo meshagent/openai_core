@@ -358,7 +358,9 @@ class LogProbs {
 }
 
 abstract class ResponseItem {
-  const ResponseItem();
+  const ResponseItem(this.type);
+
+  final String type;
 
   Map<String, dynamic> toJson();
 
@@ -404,9 +406,9 @@ abstract class ResponseItem {
         return McpCall(
           id: json['id'],
           name: json['name'],
-          argumentsJson: json['arguments'],
+          arguments: json['arguments'],
           serverLabel: json['server_label'],
-          error: json['error'],
+          error: json['error'] == null ? null : McpError.fromJson(json['error']),
           output: json['output'],
         );
       case 'mcp_list_tools':
@@ -694,7 +696,7 @@ class ComputerCall extends ResponseItem {
     required this.action,
     required this.pendingSafetyChecks,
     this.status,
-  });
+  }) : super('computer_call');
 
   final String id;
   final String callId;
@@ -725,7 +727,7 @@ class ComputerCallOutput extends ResponseItem {
     this.acknowledgedSafetyChecks,
     this.id,
     this.status,
-  });
+  }) : super('computer_call_output');
 
   final String callId;
   final ComputerScreenshotOutput output;
@@ -750,7 +752,7 @@ class FileSearchCall extends ResponseItem {
     required this.queries,
     required this.status,
     this.results,
-  });
+  }) : super('file_search_call');
 
   final String id;
   final List<String> queries;
@@ -771,7 +773,7 @@ class WebSearchCall extends ResponseItem {
   const WebSearchCall({
     required this.id,
     required this.status,
-  });
+  }) : super('web_search_call');
 
   final String id;
   final WebSearchToolCallStatus status;
@@ -786,7 +788,7 @@ class LocalShellCall extends ResponseItem {
     required this.callId,
     required this.action,
     required this.status,
-  });
+  }) : super('local_shell_call');
 
   final String id;
   final String callId;
@@ -812,7 +814,7 @@ class LocalShellCallOutput extends ResponseItem {
     required this.callId,
     required this.output,
     this.status,
-  });
+  }) : super('local_shell_call_output');
 
   final String callId;
   final String output;
@@ -831,17 +833,17 @@ class McpCall extends ResponseItem {
   const McpCall({
     required this.id,
     required this.name,
-    required this.argumentsJson,
+    required this.arguments,
     required this.serverLabel,
     this.error,
     this.output,
-  });
+  }) : super('mcp_call');
 
   final String id;
   final String name;
-  final String argumentsJson;
+  final String arguments;
   final String serverLabel;
-  final String? error;
+  final McpError? error;
   final String? output;
 
   @override
@@ -849,9 +851,9 @@ class McpCall extends ResponseItem {
         'type': 'mcp_call',
         'id': id,
         'name': name,
-        'arguments': argumentsJson,
+        'arguments': arguments,
         'server_label': serverLabel,
-        if (error != null) 'error': error,
+        if (error != null) 'error': error!.toJson(),
         if (output != null) 'output': output,
       };
 }
@@ -862,7 +864,7 @@ class McpListTools extends ResponseItem {
     required this.serverLabel,
     required this.tools,
     this.error,
-  });
+  }) : super('mcp_list_tools');
 
   final String id;
   final String serverLabel;
@@ -885,7 +887,7 @@ class McpApprovalRequest extends ResponseItem {
     required this.arguments,
     required this.name,
     required this.serverLabel,
-  });
+  }) : super('mcp_approval_request');
 
   final String id;
   final String arguments;
@@ -908,7 +910,7 @@ class McpApprovalResponse extends ResponseItem {
     required this.approve,
     this.id,
     this.reason,
-  });
+  }) : super('mcp_approval_response');
 
   final String approvalRequestId;
   final bool approve;
@@ -931,35 +933,39 @@ class FunctionCallOutput extends ResponseItem {
     required this.output,
     this.status,
     this.id,
-  });
+  }) : super('function_call_output');
 
   const FunctionCallOutput.text({
     required this.callId,
     required String output,
     this.status,
     this.id,
-  }) : output = output;
+  })  : output = output,
+        super('function_call_output');
 
   FunctionCallOutput.image({
     required this.callId,
     required InputImageContent output,
     this.status,
     this.id,
-  }) : output = [output];
+  })  : output = [output],
+        super('function_call_output');
 
   FunctionCallOutput.file({
     required this.callId,
     required InputFileContent output,
     this.status,
     this.id,
-  }) : output = [output];
+  })  : output = [output],
+        super('function_call_output');
 
   FunctionCallOutput.list({
     required this.callId,
     required List<ResponseContent> output,
     this.status,
     this.id,
-  }) : output = output;
+  })  : output = output,
+        super('function_call_output');
 
   final String callId;
   final dynamic output;
@@ -983,7 +989,7 @@ class FunctionCall extends ResponseItem {
     required this.name,
     this.id,
     this.status,
-  });
+  }) : super('function_call');
 
   final String arguments;
   final String callId;
@@ -1015,7 +1021,7 @@ class ImageGenerationCall extends ResponseItem {
     required this.id,
     required this.status,
     this.resultBase64,
-  });
+  }) : super('image_generation_call');
 
   final String id;
   final ImageGenerationCallStatus status;
@@ -1037,7 +1043,7 @@ class CodeInterpreterCall extends ResponseItem {
     this.results,
     required this.status,
     this.containerId,
-  });
+  }) : super('code_interpreter_call');
 
   final String id;
   final String code;
@@ -1062,7 +1068,7 @@ class Reasoning extends ResponseItem {
     required this.summary,
     this.encryptedContent,
     this.status,
-  });
+  }) : super('reasoning');
 
   final String id;
   final List<ReasoningSummary> summary;
@@ -1080,7 +1086,7 @@ class Reasoning extends ResponseItem {
 }
 
 class ItemReference extends ResponseItem {
-  const ItemReference({required this.id});
+  const ItemReference({required this.id}) : super('item_reference');
   final String id;
   @override
   Map<String, dynamic> toJson() => {'type': 'item_reference', 'id': id};
@@ -1088,7 +1094,7 @@ class ItemReference extends ResponseItem {
 
 // Three “message” shapes
 class InputText extends ResponseItem {
-  const InputText({required this.role, required this.text});
+  const InputText({required this.role, required this.text}) : super('message');
   final String role;
   final String text;
 
@@ -1100,7 +1106,7 @@ class InputMessage extends ResponseItem {
   const InputMessage({
     required this.role,
     required this.content,
-  });
+  }) : super('message');
 
   final String role;
   final List<ResponseContent> content;
@@ -1119,7 +1125,7 @@ class OutputMessage extends ResponseItem {
     required this.content,
     required this.id,
     required this.status,
-  });
+  }) : super('message');
 
   final String role;
   final List<ResponseContent> content;
@@ -1138,7 +1144,7 @@ class OutputMessage extends ResponseItem {
 
 // Fallback / unknown
 class OtherResponseItem extends ResponseItem {
-  const OtherResponseItem(this.raw);
+  OtherResponseItem(this.raw) : super(raw["type"]);
   final Map<String, dynamic> raw;
 
   @override
@@ -2004,14 +2010,14 @@ class MCPListToolItem {
   String toString() => 'MCPListToolItem(name: $name)';
 }
 
-abstract class MCPToolApproval {
-  const MCPToolApproval();
+abstract class McpToolApproval {
+  const McpToolApproval();
 
-  factory MCPToolApproval.fromJson(dynamic raw) {
-    if (raw == 'always') return const MCPToolApprovalAlways();
-    if (raw == 'never') return const MCPToolApprovalNever();
+  factory McpToolApproval.fromJson(dynamic raw) {
+    if (raw == 'always') return const McpToolApprovalAlways();
+    if (raw == 'never') return const MCPToolApprovalNever.McpToolApprovalNever();
     final map = raw as Map<String, dynamic>;
-    return MCPToolApprovalList(
+    return McpToolApprovalList(
       always: (map['always'] as List?)?.cast<String>(),
       never: (map['never'] as List?)?.cast<String>(),
     );
@@ -2020,20 +2026,20 @@ abstract class MCPToolApproval {
   dynamic toJson();
 }
 
-class MCPToolApprovalAlways extends MCPToolApproval {
-  const MCPToolApprovalAlways();
+class McpToolApprovalAlways extends McpToolApproval {
+  const McpToolApprovalAlways();
   @override
   String toJson() => 'always';
 }
 
-class MCPToolApprovalNever extends MCPToolApproval {
-  const MCPToolApprovalNever();
+class MCPToolApprovalNever extends McpToolApproval {
+  const MCPToolApprovalNever.McpToolApprovalNever();
   @override
   String toJson() => 'never';
 }
 
-class MCPToolApprovalList extends MCPToolApproval {
-  const MCPToolApprovalList({this.always, this.never});
+class McpToolApprovalList extends McpToolApproval {
+  const McpToolApprovalList({this.always, this.never});
   final List<String>? always;
   final List<String>? never;
 
@@ -2240,7 +2246,7 @@ abstract class Tool {
           serverUrl: json['server_url'] as String,
           allowedTools: (json['allowed_tools'] as List?)?.cast<String>(),
           headers: (json['headers'] as Map?)?.cast<String, String>(),
-          requireApproval: json['require_approval'] == null ? null : MCPToolApproval.fromJson(json['require_approval']),
+          requireApproval: json['require_approval'] == null ? null : McpToolApproval.fromJson(json['require_approval']),
         );
       case 'code_interpreter':
         return CodeInterpreterTool(
@@ -2373,7 +2379,7 @@ class McpTool extends Tool {
   final String serverUrl;
   final List<String>? allowedTools;
   final Map<String, String>? headers;
-  final MCPToolApproval? requireApproval;
+  final McpToolApproval? requireApproval;
 
   @override
   Map<String, dynamic> toJson() => {
@@ -4099,5 +4105,38 @@ class Prompt {
         'id': id,
         if (version != null) 'version': version,
         if (variables != null) 'variables': variables!.toJson(),
+      };
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  MCP error                                              */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+class McpError {
+  const McpError({
+    required this.code,
+    required this.message,
+    required this.type,
+  });
+
+  factory McpError.fromJson(Map<String, dynamic> j) => McpError(
+        code: (j['code'] as num?)?.toInt(),
+        message: j['message'] as String,
+        type: j['type'] as String,
+      );
+
+  /// Integer protocol error code (e.g., spec-defined numeric code)
+  final int? code;
+
+  /// Human-readable description.
+  final String message;
+
+  /// Error type string (as provided by the server).
+  final String type;
+
+  Map<String, dynamic> toJson() => {
+        if (code != null) 'code': code,
+        'message': message,
+        'type': type,
       };
 }

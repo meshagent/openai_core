@@ -560,7 +560,7 @@ class RealtimeMcpTool extends RealtimeTool {
   final String? serverDescription;
   final List<String>? allowedTools;
   final Map<String, String>? headers;
-  final MCPToolApproval? requireApproval;
+  final McpToolApproval? requireApproval;
 
   factory RealtimeMcpTool.fromJson(Map<String, dynamic> json) {
     return RealtimeMcpTool(
@@ -569,7 +569,7 @@ class RealtimeMcpTool extends RealtimeTool {
       serverDescription: json['server_description'] as String?,
       allowedTools: (json['allowed_tools'] as List?)?.cast<String>(),
       headers: (json['headers'] as Map?)?.cast<String, String>(),
-      requireApproval: json['require_approval'] == null ? null : MCPToolApproval.fromJson(json['require_approval']),
+      requireApproval: json['require_approval'] == null ? null : McpToolApproval.fromJson(json['require_approval']),
     );
   }
 
@@ -824,11 +824,11 @@ abstract class RealtimeEvent {
 
       /* ── server → client : mcp_list_tools lifecycle ─────────────────────── */
       case 'mcp_list_tools.in_progress':
-        return McpListToolsInProgressEvent.fromJson(j);
+        return RealtimeMcpListToolsInProgressEvent.fromJson(j);
       case 'mcp_list_tools.completed':
-        return McpListToolsCompletedEvent.fromJson(j);
+        return RealtimeMcpListToolsCompletedEvent.fromJson(j);
       case 'mcp_list_tools.failed':
-        return McpListToolsFailedEvent.fromJson(j);
+        return RealtimeMcpListToolsFailedEvent.fromJson(j);
 
       /* ── server → client : response-level (output_* variants) ─────────── */
       case 'response.output_text.delta':
@@ -1165,6 +1165,37 @@ abstract class RealtimeConversationItem {
           callId: m['call_id'],
           status: m['status'] ?? 'in_progress',
         );
+      case 'mcp_call':
+        return RealtimeMcpCall(
+          id: m['id'],
+          name: m['name'],
+          arguments: m['arguments'],
+          serverLabel: m['server_label'],
+          error: m['error'] == null ? null : McpError.fromJson(m['error']),
+          output: m['output'],
+        );
+
+      case 'mcp_list_tools':
+        return RealtimeMcpListTools(
+          id: m['id'],
+          serverLabel: m['server_label'],
+          tools: (m['tools'] as List).cast<Map<String, dynamic>>().map(MCPListToolItem.fromJson).toList(),
+          error: m['error'],
+        );
+      case 'mcp_approval_request':
+        return RealtimeMcpApprovalRequest(
+          id: m['id'],
+          arguments: m['arguments'],
+          name: m['name'],
+          serverLabel: m['server_label'],
+        );
+      case 'mcp_approval_response':
+        return RealtimeMcpApprovalResponse(
+          approvalRequestId: m['approval_request_id'],
+          approve: m['approve'],
+          id: m['id'],
+          reason: m['reason'],
+        );
       case 'function_call_output':
         return RealtimeFunctionCallOutput(
           id: m['id'],
@@ -1178,6 +1209,44 @@ abstract class RealtimeConversationItem {
   }
 
   Map<String, dynamic> toJson();
+}
+
+class RealtimeMcpCall extends McpCall implements RealtimeConversationItem {
+  const RealtimeMcpCall({
+    required super.id,
+    required super.name,
+    required super.arguments,
+    required super.serverLabel,
+    super.error,
+    super.output,
+  });
+}
+
+class RealtimeMcpListTools extends McpListTools implements RealtimeConversationItem {
+  const RealtimeMcpListTools({
+    required super.id,
+    required super.serverLabel,
+    required super.tools,
+    super.error,
+  });
+}
+
+class RealtimeMcpApprovalRequest extends McpApprovalRequest implements RealtimeConversationItem {
+  const RealtimeMcpApprovalRequest({
+    required super.id,
+    required super.arguments,
+    required super.name,
+    required super.serverLabel,
+  });
+}
+
+class RealtimeMcpApprovalResponse extends McpApprovalResponse implements RealtimeConversationItem {
+  const RealtimeMcpApprovalResponse({
+    required super.approvalRequestId,
+    required super.approve,
+    super.id,
+    super.reason,
+  });
 }
 
 /* ─── concrete item shapes ──────────────────────────────────────────────── */
@@ -3592,13 +3661,13 @@ class RealtimeResponseMcpCallFailedEvent extends RealtimeEvent {
 /* ────────────────────────────────────────────────────────────────────────── */
 
 /// Server → client: listing MCP tools is in progress for an item.
-class McpListToolsInProgressEvent extends RealtimeEvent {
-  McpListToolsInProgressEvent({
+class RealtimeMcpListToolsInProgressEvent extends RealtimeEvent {
+  RealtimeMcpListToolsInProgressEvent({
     required this.eventId,
     required this.itemId,
   }) : super('mcp_list_tools.in_progress');
 
-  factory McpListToolsInProgressEvent.fromJson(Map<String, dynamic> j) => McpListToolsInProgressEvent(
+  factory RealtimeMcpListToolsInProgressEvent.fromJson(Map<String, dynamic> j) => RealtimeMcpListToolsInProgressEvent(
         eventId: j['event_id'] as String,
         itemId: j['item_id'] as String,
       );
@@ -3615,13 +3684,13 @@ class McpListToolsInProgressEvent extends RealtimeEvent {
 }
 
 /// Server → client: listing MCP tools completed for an item.
-class McpListToolsCompletedEvent extends RealtimeEvent {
-  McpListToolsCompletedEvent({
+class RealtimeMcpListToolsCompletedEvent extends RealtimeEvent {
+  RealtimeMcpListToolsCompletedEvent({
     required this.eventId,
     required this.itemId,
   }) : super('mcp_list_tools.completed');
 
-  factory McpListToolsCompletedEvent.fromJson(Map<String, dynamic> j) => McpListToolsCompletedEvent(
+  factory RealtimeMcpListToolsCompletedEvent.fromJson(Map<String, dynamic> j) => RealtimeMcpListToolsCompletedEvent(
         eventId: j['event_id'] as String,
         itemId: j['item_id'] as String,
       );
@@ -3638,13 +3707,13 @@ class McpListToolsCompletedEvent extends RealtimeEvent {
 }
 
 /// Server → client: listing MCP tools failed for an item.
-class McpListToolsFailedEvent extends RealtimeEvent {
-  McpListToolsFailedEvent({
+class RealtimeMcpListToolsFailedEvent extends RealtimeEvent {
+  RealtimeMcpListToolsFailedEvent({
     required this.eventId,
     required this.itemId,
   }) : super('mcp_list_tools.failed');
 
-  factory McpListToolsFailedEvent.fromJson(Map<String, dynamic> j) => McpListToolsFailedEvent(
+  factory RealtimeMcpListToolsFailedEvent.fromJson(Map<String, dynamic> j) => RealtimeMcpListToolsFailedEvent(
         eventId: j['event_id'] as String,
         itemId: j['item_id'] as String,
       );

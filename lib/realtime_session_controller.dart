@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:openai_core/responses.dart';
+
 import 'realtime.dart';
 
 class RealtimeSessionException implements Exception {
@@ -122,7 +124,7 @@ abstract class RealtimeSessionController {
 }
 
 abstract class RealtimeToolHandler<TMetadata> {
-  RealtimeToolHandler({required this.metadata});
+  const RealtimeToolHandler({required this.metadata});
 
   final TMetadata metadata;
 
@@ -130,7 +132,7 @@ abstract class RealtimeToolHandler<TMetadata> {
 }
 
 abstract class RealtimeFunctionToolHandler extends RealtimeToolHandler<RealtimeFunctionTool> {
-  RealtimeFunctionToolHandler({required super.metadata});
+  const RealtimeFunctionToolHandler({required super.metadata});
 
   @override
   Future<void> Function(RealtimeSessionController controller)? getHandler(RealtimeEvent e) {
@@ -162,4 +164,28 @@ abstract class RealtimeFunctionToolHandler extends RealtimeToolHandler<RealtimeF
   }
 
   Future<String> execute(RealtimeSessionController controller, Map<String, dynamic> arguments);
+}
+
+class RealtimeMcpToolHandler extends RealtimeToolHandler<RealtimeMcpTool> {
+  const RealtimeMcpToolHandler({required super.metadata});
+
+  @override
+  Future<void> Function(RealtimeSessionController controller)? getHandler(RealtimeEvent e) {
+    return switch (e) {
+      (RealtimeResponseOutputItemDoneEvent evt) => switch (evt.item) {
+          (RealtimeMcpApprovalRequest i) => (c) => onMcpApprovalRequest(c, i),
+          _ => null,
+        },
+      (_) => null
+    };
+  }
+
+  Future<bool> onDidRequestApproval(McpApprovalRequest request) async {
+    return true;
+  }
+
+  Future<void> onMcpApprovalRequest(RealtimeSessionController controller, McpApprovalRequest request) async {
+    controller.send(RealtimeConversationItemCreateEvent(
+        item: RealtimeMcpApprovalResponse(approvalRequestId: request.id, approve: await onDidRequestApproval(request))));
+  }
 }

@@ -288,7 +288,7 @@ class ResponsesSessionController {
 }
 
 abstract class ToolHandler<TMeta extends Tool> {
-  ToolHandler({required this.metadata});
+  const ToolHandler({required this.metadata});
 
   final TMeta metadata;
 
@@ -344,7 +344,7 @@ abstract class FileSearchToolHandler extends ToolHandler<FileSearchTool> {
     return null;
   }
 
-  Future<void> onFileSearch(ResponsesSessionController controller, ResponseFileSearchCallEvent e);
+  void onFileSearch(ResponsesSessionController controller, ResponseFileSearchCallEvent e);
 }
 
 abstract class WebSearchToolHandler extends ToolHandler<WebSearchPreviewTool> {
@@ -361,24 +361,54 @@ abstract class WebSearchToolHandler extends ToolHandler<WebSearchPreviewTool> {
     return null;
   }
 
-  Future<void> onWebSearch(ResponsesSessionController controller, ResponseWebSearchCallEvent e);
+  void onWebSearch(ResponsesSessionController controller, ResponseWebSearchCallEvent e);
 }
 
-abstract class McpToolHandler extends ToolHandler<McpTool> {
-  McpToolHandler({required super.metadata});
+class McpToolHandler extends ToolHandler<McpTool> {
+  const McpToolHandler({required super.metadata});
 
   @override
-  Future<ResponseItem?> Function(ResponsesSessionController)? getHandler(ResponseEvent event) {
-    if (event is ResponseMcpCallEvent) {
-      return (controller) async {
-        onMcpCall(controller, event);
-        return null;
-      };
-    }
+  Future<ResponseItem?> Function(ResponsesSessionController controller)? getHandler(ResponseEvent e) {
+    return switch (e) {
+      (ResponseOutputItemDone evt) => switch (evt.item) {
+          (McpCall i) => (c) => _onMcpCall(c, i),
+          (McpListTools i) => (c) => _onMcpListTools(c, i),
+          (McpApprovalRequest i) => (c) => onMcpApprovalRequest(c, i),
+          (McpApprovalResponse i) => (c) => _onMcpApprovalResponse(c, i),
+          _ => null,
+        },
+      (_) => null
+    };
+  }
+
+  void onMcpCall(ResponsesSessionController controller, McpCall call) async {}
+
+  Future<ResponseItem?> _onMcpCall(ResponsesSessionController controller, McpCall call) async {
+    onMcpCall(controller, call);
     return null;
   }
 
-  Future<void> onMcpCall(ResponsesSessionController controller, ResponseMcpCallEvent e);
+  void onMcpListTools(ResponsesSessionController controller, McpListTools list) {}
+
+  Future<ResponseItem?> _onMcpListTools(ResponsesSessionController controller, McpListTools list) async {
+    onMcpListTools(controller, list);
+    return null;
+  }
+
+  Future<bool> onDidRequestApproval(McpApprovalRequest request) async {
+    return true;
+  }
+
+  Future<ResponseItem?> onMcpApprovalRequest(ResponsesSessionController controller, McpApprovalRequest request) async {
+    return McpApprovalResponse(approvalRequestId: request.id, approve: await onDidRequestApproval(request));
+  }
+
+  Future<void> onMcpApprovalResponse(ResponsesSessionController controller, McpApprovalResponse response) async {}
+
+  Future<ResponseItem?> _onMcpApprovalResponse(ResponsesSessionController controller, McpApprovalResponse response) async {
+    onMcpApprovalResponse(controller, response);
+    return null;
+  }
 }
 
 abstract class CodeInterpreterToolHandler extends ToolHandler<CodeInterpreterTool> {
@@ -395,7 +425,7 @@ abstract class CodeInterpreterToolHandler extends ToolHandler<CodeInterpreterToo
     return null;
   }
 
-  Future<void> onCodeInterpreterCall(ResponsesSessionController controller, ResponseCodeInterpreterCallEvent e);
+  void onCodeInterpreterCall(ResponsesSessionController controller, ResponseCodeInterpreterCallEvent e);
 }
 
 abstract class ImageGenerationToolHandler extends ToolHandler {
@@ -420,13 +450,13 @@ abstract class LocalShellToolHandler extends ToolCallHandler<LocalShellTool, Loc
 
   @override
   Future<ResponseItem?> Function(ResponsesSessionController)? getHandler(ResponseEvent event) {
-    if (event is LocalShellCall) {
-      return (controller) async {
-        onLocalShellToolCall(controller, event as LocalShellCall);
-        return null;
-      };
-    }
-    return null;
+    return switch (event) {
+      (ResponseOutputItemDone evt) => switch (evt.item) {
+          (LocalShellCall i) => (c) => onLocalShellToolCall(c, i),
+          _ => null,
+        },
+      (_) => null,
+    };
   }
 
   Future<LocalShellCallOutput> onLocalShellToolCall(ResponsesSessionController controller, LocalShellCall e);

@@ -1252,8 +1252,8 @@ class RealtimeConversationItemCreateEvent extends RealtimeEvent {
 
 /// Per-request inference parameters (override session defaults **only**
 /// for this single response).
-class RealtimeResponse {
-  RealtimeResponse({
+class RealtimeResponseOptions {
+  RealtimeResponseOptions({
     this.conversation, // "auto" | "none"
     this.input, // custom prompt context
     this.instructions,
@@ -1268,7 +1268,7 @@ class RealtimeResponse {
   });
 
   /* ---------- factory fromJson ---------- */
-  factory RealtimeResponse.fromJson(Map<String, dynamic> j) => RealtimeResponse(
+  factory RealtimeResponseOptions.fromJson(Map<String, dynamic> j) => RealtimeResponseOptions(
         conversation: j['conversation'],
         input: j['input'] == null
             ? null
@@ -1330,12 +1330,12 @@ class RealtimeResponseCreateEvent extends RealtimeEvent {
   /* ---------- factory ---------- */
   factory RealtimeResponseCreateEvent.fromJson(Map<String, dynamic> j) => RealtimeResponseCreateEvent(
         eventId: j['event_id'],
-        response: RealtimeResponse.fromJson(j['response'] as Map<String, dynamic>),
+        response: RealtimeResponseOptions.fromJson(j['response'] as Map<String, dynamic>),
       );
 
   /* ---------- data ---------- */
   final String? eventId;
-  final RealtimeResponse response;
+  final RealtimeResponseOptions response;
 
   /* ---------- serialise ---------- */
   @override
@@ -1918,12 +1918,12 @@ class RealtimeResponseCreatedEvent extends RealtimeEvent {
   /* ---------- factory ---------- */
   factory RealtimeResponseCreatedEvent.fromJson(Map<String, dynamic> j) => RealtimeResponseCreatedEvent(
         eventId: j['event_id'],
-        response: RealtimeResponse.fromJson(j['response'] as Map<String, dynamic>),
+        response: RealtimeResponseOptions.fromJson(j['response'] as Map<String, dynamic>),
       );
 
   /* ---------- data ---------- */
   final String? eventId;
-  final RealtimeResponse response;
+  final RealtimeResponseOptions response;
 
   /* ---------- serialise ---------- */
   @override
@@ -1943,12 +1943,12 @@ class RealtimeResponseCancelledEvent extends RealtimeEvent {
   /* ---------- factory ---------- */
   factory RealtimeResponseCancelledEvent.fromJson(Map<String, dynamic> j) => RealtimeResponseCancelledEvent(
         eventId: j['event_id'],
-        response: RealtimeResponse.fromJson(j['response'] as Map<String, dynamic>),
+        response: RealtimeResponseOptions.fromJson(j['response'] as Map<String, dynamic>),
       );
 
   /* ---------- data ---------- */
   final String? eventId;
-  final RealtimeResponse response;
+  final RealtimeResponseOptions response;
 
   /* ---------- serialise ---------- */
   @override
@@ -1968,12 +1968,12 @@ class RealtimeResponseDoneEvent extends RealtimeEvent {
   /* ---------- factory ---------- */
   factory RealtimeResponseDoneEvent.fromJson(Map<String, dynamic> j) => RealtimeResponseDoneEvent(
         eventId: j['event_id'],
-        response: RealtimeResponse.fromJson(j['response'] as Map<String, dynamic>),
+        response: RealtimeResponseOptions.fromJson(j['response'] as Map<String, dynamic>),
       );
 
   /* ---------- data ---------- */
   final String? eventId;
-  final RealtimeResponse response;
+  final RealtimeResponseOptions response;
 
   /* ---------- serialise ---------- */
   @override

@@ -61,7 +61,7 @@ An analysis of potential challenges and a plan to address them.
 
 _This phase corrects the core data models to align with the GA specification, addressing the most critical structural issues before building upon them._
 
-#### **Task 1.1: Rename `RealtimeResponse` to `RealtimeResponseOptions`**
+#### **Task 1.1 [✅ DONE]: Rename `RealtimeResponse` to `RealtimeResponseOptions`**
 
 - **Description:** Rename the existing `RealtimeResponse` class to `RealtimeResponseOptions` to accurately reflect its purpose as a parameter object for creating a response, as defined by the `RealtimeResponseCreateParams` schema.
 - **Files to Create/Modify:**

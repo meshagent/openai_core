@@ -190,7 +190,7 @@ _This phase implements the logic for handling new events, corrects existing even
   - Add a new case `'input_audio_buffer.timeout_triggered'` to the `RealtimeEvent.fromJson` factory to instantiate this new class.
 - **Depends On:** `None`
 
-#### **Task 3.2: Create `ConversationItemInputAudioTranscriptionSegmentEvent`**
+#### **Task 3.2 [✅ DONE]: Create `ConversationItemInputAudioTranscriptionSegmentEvent`**
 
 - **Description:** Add a new event class to handle the `conversation.item.input_audio_transcription.segment` server event.
 - **Files to Create/Modify:**

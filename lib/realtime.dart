@@ -738,6 +738,8 @@ abstract class RealtimeEvent {
         return ConversationItemInputAudioTranscriptionDeltaEvent.fromJson(j);
       case 'conversation.item.input_audio_transcription.failed':
         return ConversationItemInputAudioTranscriptionFailedEvent.fromJson(j);
+      case 'conversation.item.input_audio_transcription.segment':
+        return ConversationItemInputAudioTranscriptionSegmentEvent.fromJson(j);
       case 'conversation.item.truncated':
         return ConversationItemTruncatedEvent.fromJson(j);
       case 'conversation.item.deleted':
@@ -2154,6 +2156,57 @@ class ConversationItemInputAudioTranscriptionFailedEvent extends RealtimeEvent {
         'item_id': itemId,
         'content_index': contentIndex,
         'error': error.toJson(),
+      };
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  “conversation.item.input_audio_transcription.segment” – server event     */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+class ConversationItemInputAudioTranscriptionSegmentEvent extends RealtimeEvent {
+  ConversationItemInputAudioTranscriptionSegmentEvent({
+    required this.eventId,
+    required this.itemId,
+    required this.contentIndex,
+    required this.text,
+    required this.id,
+    required this.speaker,
+    required this.start,
+    required this.end,
+  }) : super('conversation.item.input_audio_transcription.segment');
+
+  factory ConversationItemInputAudioTranscriptionSegmentEvent.fromJson(Map<String, dynamic> j) =>
+      ConversationItemInputAudioTranscriptionSegmentEvent(
+        eventId: j['event_id'] as String,
+        itemId: j['item_id'] as String,
+        contentIndex: (j['content_index'] as num).toInt(),
+        text: j['text'] as String,
+        id: j['id'] as String,
+        speaker: j['speaker'] as String,
+        start: j['start'] as num,
+        end: j['end'] as num,
+      );
+
+  final String eventId;
+  final String itemId;
+  final int contentIndex;
+  final String text;
+  final String id;
+  final String speaker;
+  final num start;
+  final num end;
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': type,
+        'event_id': eventId,
+        'item_id': itemId,
+        'content_index': contentIndex,
+        'text': text,
+        'id': id,
+        'speaker': speaker,
+        'start': start,
+        'end': end,
       };
 }
 

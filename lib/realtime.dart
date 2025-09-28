@@ -177,28 +177,53 @@ abstract class RealtimeTruncation {
   const RealtimeTruncation();
 
   dynamic toJson();
+
+  factory RealtimeTruncation.fromJson(dynamic raw) {
+    if (raw is String) {
+      if (raw == 'auto') return const RealtimeTruncationAuto();
+      if (raw == 'disabled') return const RealtimeTruncationDisabled();
+    }
+    if (raw is Map<String, dynamic>) {
+      if (raw['type'] == 'retention_ratio') {
+        return RealtimeTruncationRatio.fromJson(raw);
+      }
+    }
+    // Fallback or error for unknown types
+    throw ArgumentError('Unexpected RealtimeTruncation value: $raw');
+  }
 }
 
 class RealtimeTruncationAuto extends RealtimeTruncation {
+  const RealtimeTruncationAuto();
+  @override
   dynamic toJson() {
     return "auto";
   }
 }
 
 class RealtimeTruncationDisabled extends RealtimeTruncation {
+  const RealtimeTruncationDisabled();
+  @override
   dynamic toJson() {
-    return "auto";
+    return "disabled";
   }
 }
 
 class RealtimeTruncationRatio extends RealtimeTruncation {
   const RealtimeTruncationRatio({required this.ratio});
 
+  factory RealtimeTruncationRatio.fromJson(Map<String, dynamic> json) {
+    return RealtimeTruncationRatio(
+      ratio: (json['retention_ratio'] as num).toDouble(),
+    );
+  }
+
   final double ratio;
 
+  @override
   dynamic toJson() {
     return {
-      "ratio": "ratio",
+      "type": "retention_ratio",
       "retention_ratio": ratio,
     };
   }
@@ -683,6 +708,8 @@ abstract class RealtimeEvent {
         return RealtimeConversationItemDeleteEvent.fromJson(j);
       case 'response.create':
         return RealtimeResponseCreateEvent.fromJson(j);
+      case 'response.cancel':
+        return RealtimeResponseCancelEvent.fromJson(j);
 
       case 'output_audio_buffer.clear':
         return OutputAudioBufferClearEvent.fromJson(j);
@@ -713,6 +740,8 @@ abstract class RealtimeEvent {
         return ConversationItemInputAudioTranscriptionDeltaEvent.fromJson(j);
       case 'conversation.item.input_audio_transcription.failed':
         return ConversationItemInputAudioTranscriptionFailedEvent.fromJson(j);
+      case 'conversation.item.input_audio_transcription.segment':
+        return ConversationItemInputAudioTranscriptionSegmentEvent.fromJson(j);
       case 'conversation.item.truncated':
         return ConversationItemTruncatedEvent.fromJson(j);
       case 'conversation.item.deleted':
@@ -725,6 +754,8 @@ abstract class RealtimeEvent {
         return InputAudioBufferClearedEvent.fromJson(j);
       case 'input_audio_buffer.speech_started':
         return InputAudioBufferSpeechStartedEvent.fromJson(j);
+      case 'input_audio_buffer.timeout_triggered':
+        return InputAudioBufferTimeoutTriggeredEvent.fromJson(j);
 
       /* ── server → client : response-level ────────────────────────────── */
 
@@ -732,8 +763,6 @@ abstract class RealtimeEvent {
         return RealtimeResponseCreateEvent.fromJson(j);
       case 'response.done':
         return RealtimeResponseDoneEvent.fromJson(j);
-      case 'response.cancelled':
-        return RealtimeResponseCancelledEvent.fromJson(j);
 
       case 'response.output_item.added':
         return RealtimeResponseOutputItemAddedEvent.fromJson(j);
@@ -913,13 +942,30 @@ class SessionUpdateEvent extends RealtimeEvent {
     required this.session,
   }) : super('session.update');
 
-  factory SessionUpdateEvent.fromJson(Map<String, dynamic> j) => SessionUpdateEvent(
-        eventId: j['event_id'],
-        session: RealtimeSession.fromJson(j['session'] as Map<String, dynamic>),
-      );
+  factory SessionUpdateEvent.fromJson(Map<String, dynamic> j) {
+    final sessionJson = j['session'] as Map<String, dynamic>;
+    final sessionType = sessionJson['type'] as String?;
+
+    final BaseRealtimeSession session;
+    switch (sessionType) {
+      case 'realtime':
+        session = RealtimeSession.fromJson(sessionJson);
+        break;
+      case 'transcription':
+        session = RealtimeTranscriptionSession.fromJson(sessionJson);
+        break;
+      default:
+        throw ArgumentError('Unknown session type "$sessionType" in session.update event');
+    }
+
+    return SessionUpdateEvent(
+      eventId: j['event_id'] as String?,
+      session: session,
+    );
+  }
 
   final String? eventId; // optional client-generated correlation ID
-  final RealtimeSession session;
+  final BaseRealtimeSession session;
 
   @override
   Map<String, dynamic> toJson() => {
@@ -1250,25 +1296,64 @@ class RealtimeConversationItemCreateEvent extends RealtimeEvent {
 /*  “response.create”  –  trigger model inference                            */
 /* ────────────────────────────────────────────────────────────────────────── */
 
+class ResponseAudioOutputOptions {
+  const ResponseAudioOutputOptions({
+    this.format,
+    this.voice,
+  });
+
+  factory ResponseAudioOutputOptions.fromJson(Map<String, dynamic> json) {
+    return ResponseAudioOutputOptions(
+      format: json['format'] == null ? null : AudioFormat.fromJson(json['format']),
+      voice: json['voice'] == null ? null : SpeechVoice.fromJson(json['voice']),
+    );
+  }
+
+  final AudioFormat? format;
+  final SpeechVoice? voice;
+
+  Map<String, dynamic> toJson() => {
+        if (format != null) 'format': format!.toJson(),
+        if (voice != null) 'voice': voice!.toJson(),
+      };
+}
+
+class ResponseAudioOptions {
+  const ResponseAudioOptions({
+    this.output,
+  });
+
+  factory ResponseAudioOptions.fromJson(Map<String, dynamic> json) {
+    return ResponseAudioOptions(
+      output: json['output'] == null ? null : ResponseAudioOutputOptions.fromJson(json['output']),
+    );
+  }
+
+  final ResponseAudioOutputOptions? output;
+
+  Map<String, dynamic> toJson() => {
+        if (output != null) 'output': output!.toJson(),
+      };
+}
+
 /// Per-request inference parameters (override session defaults **only**
 /// for this single response).
-class RealtimeResponse {
-  RealtimeResponse({
+class RealtimeResponseOptions {
+  RealtimeResponseOptions({
     this.conversation, // "auto" | "none"
     this.input, // custom prompt context
     this.instructions,
     this.maxOutputTokens, // int | "inf"
     this.metadata,
-    this.modalities,
-    this.outputAudioFormat,
-    this.temperature,
+    this.outputModalities,
+    this.audio,
+    this.prompt,
     this.toolChoice,
     this.tools,
-    this.voice,
   });
 
   /* ---------- factory fromJson ---------- */
-  factory RealtimeResponse.fromJson(Map<String, dynamic> j) => RealtimeResponse(
+  factory RealtimeResponseOptions.fromJson(Map<String, dynamic> j) => RealtimeResponseOptions(
         conversation: j['conversation'],
         input: j['input'] == null
             ? null
@@ -1278,13 +1363,13 @@ class RealtimeResponse {
         instructions: j['instructions'],
         maxOutputTokens: j['max_output_tokens'],
         metadata: j['metadata']?.cast<String, dynamic>(),
-        modalities:
-            j['modalities'] == null ? null : (j['modalities'] as List).map<Modality>((m) => Modality.fromJson(m as String)).toList(),
-        outputAudioFormat: j['output_audio_format'] == null ? null : AudioFormat.fromJson(j['output_audio_format']),
-        temperature: (j['temperature'] as num?)?.toDouble(),
+        outputModalities: j['output_modalities'] == null
+            ? null
+            : (j['output_modalities'] as List).map<Modality>((m) => Modality.fromJson(m as String)).toList(),
+        audio: j['audio'] == null ? null : ResponseAudioOptions.fromJson(j['audio']),
+        prompt: j['prompt'] == null ? null : Prompt.fromJson(j['prompt']),
         toolChoice: j['tool_choice'] == null ? null : ToolChoice.fromJson(j['tool_choice']),
         tools: j['tools'] == null ? null : (j['tools'] as List).cast<Map<String, dynamic>>().map(RealtimeTool.fromJson).toList(),
-        voice: j['voice'] == null ? null : SpeechVoice.fromJson(j['voice']),
       );
 
   /* ---------- data ---------- */
@@ -1293,12 +1378,11 @@ class RealtimeResponse {
   final String? instructions;
   final dynamic maxOutputTokens; // int | "inf"
   final Map<String, dynamic>? metadata; // ≤16 kv-pairs
-  final List<Modality>? modalities;
-  final AudioFormat? outputAudioFormat;
-  final num? temperature;
+  final List<Modality>? outputModalities;
+  final ResponseAudioOptions? audio;
+  final Prompt? prompt;
   final ToolChoice? toolChoice;
   final List<RealtimeTool>? tools;
-  final SpeechVoice? voice;
 
   /* ---------- serialise ---------- */
   Map<String, dynamic> toJson() => {
@@ -1307,12 +1391,11 @@ class RealtimeResponse {
         if (instructions != null) 'instructions': instructions,
         if (maxOutputTokens != null) 'max_output_tokens': maxOutputTokens,
         if (metadata != null) 'metadata': metadata,
-        if (modalities != null) 'modalities': modalities!.map((m) => m.toJson()).toList(),
-        if (outputAudioFormat != null) 'output_audio_format': outputAudioFormat!.toJson(),
-        if (temperature != null) 'temperature': temperature,
+        if (outputModalities != null) 'output_modalities': outputModalities!.map((m) => m.toJson()).toList(),
+        if (audio != null) 'audio': audio!.toJson(),
+        if (prompt != null) 'prompt': prompt!.toJson(),
         if (toolChoice != null) 'tool_choice': toolChoice!.toJson(),
         if (tools != null) 'tools': tools!.map((t) => t.toJson()).toList(),
-        if (voice != null) 'voice': voice!.toJson(),
       };
 }
 
@@ -1330,12 +1413,12 @@ class RealtimeResponseCreateEvent extends RealtimeEvent {
   /* ---------- factory ---------- */
   factory RealtimeResponseCreateEvent.fromJson(Map<String, dynamic> j) => RealtimeResponseCreateEvent(
         eventId: j['event_id'],
-        response: RealtimeResponse.fromJson(j['response'] as Map<String, dynamic>),
+        response: RealtimeResponseOptions.fromJson(j['response'] as Map<String, dynamic>),
       );
 
   /* ---------- data ---------- */
   final String? eventId;
-  final RealtimeResponse response;
+  final RealtimeResponseOptions response;
 
   /* ---------- serialise ---------- */
   @override
@@ -1343,6 +1426,352 @@ class RealtimeResponseCreateEvent extends RealtimeEvent {
         'type': type, // "response.create"
         if (eventId != null) 'event_id': eventId,
         'response': response.toJson(),
+      };
+}
+
+/// Client → server event to cancel an in-progress assistant Response.
+/// The server will reply with `response.done` with a status of `cancelled`.
+class RealtimeResponseCancelEvent extends RealtimeEvent {
+  RealtimeResponseCancelEvent({
+    this.eventId,
+    this.responseId,
+  }) : super('response.cancel');
+
+  factory RealtimeResponseCancelEvent.fromJson(Map<String, dynamic> j) => RealtimeResponseCancelEvent(
+        eventId: j['event_id'] as String?,
+        responseId: j['response_id'] as String?,
+      );
+
+  /// Optional client-generated correlation ID.
+  final String? eventId;
+
+  /// ID of a specific response to cancel. If omitted, the server cancels the
+  /// default in-progress response for the conversation.
+  final String? responseId;
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': type, // "response.cancel"
+        if (eventId != null) 'event_id': eventId,
+        if (responseId != null) 'response_id': responseId,
+      };
+}
+
+class RealtimeResponseStatusDetailsError {
+  const RealtimeResponseStatusDetailsError({this.type, this.code});
+
+  factory RealtimeResponseStatusDetailsError.fromJson(Map<String, dynamic> json) {
+    return RealtimeResponseStatusDetailsError(
+      type: json['type'] as String?,
+      code: json['code'] as String?,
+    );
+  }
+
+  final String? type;
+  final String? code;
+
+  Map<String, dynamic> toJson() => {
+        if (type != null) 'type': type,
+        if (code != null) 'code': code,
+      };
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  Transcription Usage Models                                               */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+/// Details about the input tokens used for transcription.
+class InputTokenDetails {
+  const InputTokenDetails({
+    required this.textTokens,
+    required this.audioTokens,
+  });
+
+  factory InputTokenDetails.fromJson(Map<String, dynamic> j) => InputTokenDetails(
+        textTokens: (j['text_tokens'] as num).toInt(),
+        audioTokens: (j['audio_tokens'] as num).toInt(),
+      );
+
+  final int textTokens;
+  final int audioTokens;
+
+  Map<String, dynamic> toJson() => {
+        'text_tokens': textTokens,
+        'audio_tokens': audioTokens,
+      };
+}
+
+/// Base class for polymorphic transcription usage statistics.
+abstract class TranscriptionUsage {
+  const TranscriptionUsage(this.type);
+
+  final String type;
+
+  /// Serialise to JSON.
+  Map<String, dynamic> toJson();
+
+  /// Deserialise from JSON, dispatching to the correct concrete class.
+  factory TranscriptionUsage.fromJson(Map<String, dynamic> j) {
+    switch (j['type']) {
+      case 'tokens':
+        return TranscriptionUsageTokens.fromJson(j);
+      case 'duration':
+        return TranscriptionUsageDuration.fromJson(j);
+      default:
+        // Handle unknown types gracefully if necessary
+        throw ArgumentError('Unknown TranscriptionUsage type: "${j['type']}"');
+    }
+  }
+}
+
+/// Usage statistics for transcription models billed by token count.
+class TranscriptionUsageTokens extends TranscriptionUsage {
+  const TranscriptionUsageTokens({
+    required this.inputTokens,
+    this.inputTokenDetails,
+    required this.outputTokens,
+    required this.totalTokens,
+  }) : super('tokens');
+
+  factory TranscriptionUsageTokens.fromJson(Map<String, dynamic> j) => TranscriptionUsageTokens(
+        inputTokens: (j['input_tokens'] as num).toInt(),
+        inputTokenDetails:
+            j['input_token_details'] == null ? null : InputTokenDetails.fromJson(j['input_token_details'] as Map<String, dynamic>),
+        outputTokens: (j['output_tokens'] as num).toInt(),
+        totalTokens: (j['total_tokens'] as num).toInt(),
+      );
+
+  final int inputTokens;
+  final InputTokenDetails? inputTokenDetails;
+  final int outputTokens;
+  final int totalTokens;
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': type,
+        'input_tokens': inputTokens,
+        if (inputTokenDetails != null) 'input_token_details': inputTokenDetails!.toJson(),
+        'output_tokens': outputTokens,
+        'total_tokens': totalTokens,
+      };
+}
+
+/// Usage statistics for transcription models billed by audio duration.
+class TranscriptionUsageDuration extends TranscriptionUsage {
+  const TranscriptionUsageDuration({
+    required this.seconds,
+  }) : super('duration');
+
+  factory TranscriptionUsageDuration.fromJson(Map<String, dynamic> j) => TranscriptionUsageDuration(
+        seconds: j['seconds'] as num,
+      );
+
+  final num seconds;
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': type,
+        'seconds': seconds,
+      };
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  Realtime Response Usage Models                                           */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+/// Details about cached tokens used as input for a response.
+class CachedTokenDetails {
+  const CachedTokenDetails({
+    required this.textTokens,
+    required this.imageTokens,
+    required this.audioTokens,
+  });
+
+  factory CachedTokenDetails.fromJson(Map<String, dynamic> j) => CachedTokenDetails(
+        textTokens: (j['text_tokens'] as num).toInt(),
+        imageTokens: (j['image_tokens'] as num).toInt(),
+        audioTokens: (j['audio_tokens'] as num).toInt(),
+      );
+
+  final int textTokens;
+  final int imageTokens;
+  final int audioTokens;
+
+  Map<String, dynamic> toJson() => {
+        'text_tokens': textTokens,
+        'image_tokens': imageTokens,
+        'audio_tokens': audioTokens,
+      };
+}
+
+/// Details about the input tokens used in a response.
+class ResponseInputTokenDetails {
+  const ResponseInputTokenDetails({
+    required this.cachedTokens,
+    required this.textTokens,
+    required this.imageTokens,
+    required this.audioTokens,
+    this.cachedTokensDetails,
+  });
+
+  factory ResponseInputTokenDetails.fromJson(Map<String, dynamic> j) => ResponseInputTokenDetails(
+        cachedTokens: (j['cached_tokens'] as num).toInt(),
+        textTokens: (j['text_tokens'] as num).toInt(),
+        imageTokens: (j['image_tokens'] as num).toInt(),
+        audioTokens: (j['audio_tokens'] as num).toInt(),
+        cachedTokensDetails:
+            j['cached_tokens_details'] == null ? null : CachedTokenDetails.fromJson(j['cached_tokens_details'] as Map<String, dynamic>),
+      );
+
+  final int cachedTokens;
+  final int textTokens;
+  final int imageTokens;
+  final int audioTokens;
+  final CachedTokenDetails? cachedTokensDetails;
+
+  Map<String, dynamic> toJson() => {
+        'cached_tokens': cachedTokens,
+        'text_tokens': textTokens,
+        'image_tokens': imageTokens,
+        'audio_tokens': audioTokens,
+        if (cachedTokensDetails != null) 'cached_tokens_details': cachedTokensDetails!.toJson(),
+      };
+}
+
+/// Details about the output tokens used in a response.
+class ResponseOutputTokenDetails {
+  const ResponseOutputTokenDetails({
+    required this.textTokens,
+    required this.audioTokens,
+  });
+
+  factory ResponseOutputTokenDetails.fromJson(Map<String, dynamic> j) => ResponseOutputTokenDetails(
+        textTokens: (j['text_tokens'] as num).toInt(),
+        audioTokens: (j['audio_tokens'] as num).toInt(),
+      );
+
+  final int textTokens;
+  final int audioTokens;
+
+  Map<String, dynamic> toJson() => {
+        'text_tokens': textTokens,
+        'audio_tokens': audioTokens,
+      };
+}
+
+/// Usage statistics for a `RealtimeResponse`.
+class RealtimeResponseUsage {
+  const RealtimeResponseUsage({
+    required this.totalTokens,
+    required this.inputTokens,
+    required this.outputTokens,
+    this.inputTokenDetails,
+    this.outputTokenDetails,
+  });
+
+  factory RealtimeResponseUsage.fromJson(Map<String, dynamic> j) => RealtimeResponseUsage(
+        totalTokens: (j['total_tokens'] as num).toInt(),
+        inputTokens: (j['input_tokens'] as num).toInt(),
+        outputTokens: (j['output_tokens'] as num).toInt(),
+        inputTokenDetails:
+            j['input_token_details'] == null ? null : ResponseInputTokenDetails.fromJson(j['input_token_details'] as Map<String, dynamic>),
+        outputTokenDetails: j['output_token_details'] == null
+            ? null
+            : ResponseOutputTokenDetails.fromJson(j['output_token_details'] as Map<String, dynamic>),
+      );
+
+  final int totalTokens;
+  final int inputTokens;
+  final int outputTokens;
+  final ResponseInputTokenDetails? inputTokenDetails;
+  final ResponseOutputTokenDetails? outputTokenDetails;
+
+  Map<String, dynamic> toJson() => {
+        'total_tokens': totalTokens,
+        'input_tokens': inputTokens,
+        'output_tokens': outputTokens,
+        if (inputTokenDetails != null) 'input_token_details': inputTokenDetails!.toJson(),
+        if (outputTokenDetails != null) 'output_token_details': outputTokenDetails!.toJson(),
+      };
+}
+
+class RealtimeResponseStatusDetails {
+  const RealtimeResponseStatusDetails({this.type, this.reason, this.error});
+
+  factory RealtimeResponseStatusDetails.fromJson(Map<String, dynamic> json) {
+    return RealtimeResponseStatusDetails(
+      type: json['type'] as String?,
+      reason: json['reason'] as String?,
+      error: json['error'] == null ? null : RealtimeResponseStatusDetailsError.fromJson(json['error']),
+    );
+  }
+
+  final String? type;
+  final String? reason;
+  final RealtimeResponseStatusDetailsError? error;
+
+  Map<String, dynamic> toJson() => {
+        if (type != null) 'type': type,
+        if (reason != null) 'reason': reason,
+        if (error != null) 'error': error!.toJson(),
+      };
+}
+
+class RealtimeResponse {
+  const RealtimeResponse({
+    required this.id,
+    required this.object,
+    this.status,
+    this.statusDetails,
+    this.output,
+    this.metadata,
+    this.audio,
+    this.usage,
+    this.conversationId,
+    this.outputModalities,
+    this.maxOutputTokens,
+  });
+
+  factory RealtimeResponse.fromJson(Map<String, dynamic> json) {
+    return RealtimeResponse(
+      id: json['id'] as String,
+      object: json['object'] as String,
+      status: json['status'] as String?,
+      statusDetails: json['status_details'] == null ? null : RealtimeResponseStatusDetails.fromJson(json['status_details']),
+      output: (json['output'] as List?)?.map((item) => RealtimeConversationItem.fromJson(item)).toList(),
+      metadata: json['metadata'] as Map<String, dynamic>?,
+      audio: json['audio'] == null ? null : ResponseAudioOptions.fromJson(json['audio']),
+      usage: json['usage'] == null ? null : RealtimeResponseUsage.fromJson(json['usage']),
+      conversationId: json['conversation_id'] as String?,
+      outputModalities: (json['output_modalities'] as List?)?.map((m) => Modality.fromJson(m)).toList(),
+      maxOutputTokens: json['max_output_tokens'],
+    );
+  }
+
+  final String id;
+  final String object;
+  final String? status;
+  final RealtimeResponseStatusDetails? statusDetails;
+  final List<RealtimeConversationItem>? output;
+  final Map<String, dynamic>? metadata;
+  final ResponseAudioOptions? audio;
+  final RealtimeResponseUsage? usage;
+  final String? conversationId;
+  final List<Modality>? outputModalities;
+  final dynamic maxOutputTokens;
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'object': object,
+        if (status != null) 'status': status,
+        if (statusDetails != null) 'status_details': statusDetails!.toJson(),
+        if (output != null) 'output': output!.map((item) => item.toJson()).toList(),
+        if (metadata != null) 'metadata': metadata,
+        if (audio != null) 'audio': audio!.toJson(),
+        if (usage != null) 'usage': usage!.toJson(),
+        if (conversationId != null) 'conversation_id': conversationId,
+        if (outputModalities != null) 'output_modalities': outputModalities!.map((m) => m.toJson()).toList(),
+        if (maxOutputTokens != null) 'max_output_tokens': maxOutputTokens,
       };
 }
 
@@ -1571,7 +2000,7 @@ class ConversationItemAddedEvent extends RealtimeEvent {
     required this.eventId,
     required this.item,
     this.previousItemId,
-  }) : super('conversation.item.created');
+  }) : super('conversation.item.added');
 
   factory ConversationItemAddedEvent.fromJson(Map<String, dynamic> j) => ConversationItemAddedEvent(
         eventId: j['event_id'] as String,
@@ -1658,6 +2087,7 @@ class ConversationItemInputAudioTranscriptionCompletedEvent extends RealtimeEven
     required this.contentIndex,
     required this.transcript,
     this.logprobs,
+    this.usage,
   }) : super('conversation.item.input_audio_transcription.completed');
 
   factory ConversationItemInputAudioTranscriptionCompletedEvent.fromJson(Map<String, dynamic> j) =>
@@ -1667,6 +2097,7 @@ class ConversationItemInputAudioTranscriptionCompletedEvent extends RealtimeEven
         contentIndex: j['content_index'] as int,
         transcript: j['transcript'] as String,
         logprobs: j['logprobs'] == null ? null : LogProbs.fromJson(j['logprobs']),
+        usage: j['usage'] == null ? null : TranscriptionUsage.fromJson(j['usage'] as Map<String, dynamic>),
       );
 
   /// Unique server-generated ID for this event.
@@ -1684,6 +2115,9 @@ class ConversationItemInputAudioTranscriptionCompletedEvent extends RealtimeEven
   /// Optional per-token / per-word log-probabilities (see `common.dart`).
   final LogProbs? logprobs;
 
+  /// Usage statistics for the transcription, billed according to the ASR model's pricing.
+  final TranscriptionUsage? usage;
+
   @override
   Map<String, dynamic> toJson() => {
         'type': type,
@@ -1692,6 +2126,7 @@ class ConversationItemInputAudioTranscriptionCompletedEvent extends RealtimeEven
         'content_index': contentIndex,
         'transcript': transcript,
         if (logprobs != null) 'logprobs': logprobs!.toJson(),
+        if (usage != null) 'usage': usage!.toJson(),
       };
 }
 
@@ -1766,6 +2201,57 @@ class ConversationItemInputAudioTranscriptionFailedEvent extends RealtimeEvent {
         'item_id': itemId,
         'content_index': contentIndex,
         'error': error.toJson(),
+      };
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  “conversation.item.input_audio_transcription.segment” – server event     */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+class ConversationItemInputAudioTranscriptionSegmentEvent extends RealtimeEvent {
+  ConversationItemInputAudioTranscriptionSegmentEvent({
+    required this.eventId,
+    required this.itemId,
+    required this.contentIndex,
+    required this.text,
+    required this.id,
+    required this.speaker,
+    required this.start,
+    required this.end,
+  }) : super('conversation.item.input_audio_transcription.segment');
+
+  factory ConversationItemInputAudioTranscriptionSegmentEvent.fromJson(Map<String, dynamic> j) =>
+      ConversationItemInputAudioTranscriptionSegmentEvent(
+        eventId: j['event_id'] as String,
+        itemId: j['item_id'] as String,
+        contentIndex: (j['content_index'] as num).toInt(),
+        text: j['text'] as String,
+        id: j['id'] as String,
+        speaker: j['speaker'] as String,
+        start: j['start'] as num,
+        end: j['end'] as num,
+      );
+
+  final String eventId;
+  final String itemId;
+  final int contentIndex;
+  final String text;
+  final String id;
+  final String speaker;
+  final num start;
+  final num end;
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': type,
+        'event_id': eventId,
+        'item_id': itemId,
+        'content_index': contentIndex,
+        'text': text,
+        'id': id,
+        'speaker': speaker,
+        'start': start,
+        'end': end,
       };
 }
 
@@ -1928,32 +2414,7 @@ class RealtimeResponseCreatedEvent extends RealtimeEvent {
   /* ---------- serialise ---------- */
   @override
   Map<String, dynamic> toJson() => {
-        'type': type, // "response.create"
-        if (eventId != null) 'event_id': eventId,
-        'response': response.toJson(),
-      };
-}
-
-class RealtimeResponseCancelledEvent extends RealtimeEvent {
-  RealtimeResponseCancelledEvent({
-    this.eventId,
-    required this.response,
-  }) : super('response.create');
-
-  /* ---------- factory ---------- */
-  factory RealtimeResponseCancelledEvent.fromJson(Map<String, dynamic> j) => RealtimeResponseCancelledEvent(
-        eventId: j['event_id'],
-        response: RealtimeResponse.fromJson(j['response'] as Map<String, dynamic>),
-      );
-
-  /* ---------- data ---------- */
-  final String? eventId;
-  final RealtimeResponse response;
-
-  /* ---------- serialise ---------- */
-  @override
-  Map<String, dynamic> toJson() => {
-        'type': type, // "response.create"
+        'type': type, // "response.created"
         if (eventId != null) 'event_id': eventId,
         'response': response.toJson(),
       };
@@ -1978,7 +2439,7 @@ class RealtimeResponseDoneEvent extends RealtimeEvent {
   /* ---------- serialise ---------- */
   @override
   Map<String, dynamic> toJson() => {
-        'type': type, // "response.create"
+        'type': type, // "response.done"
         if (eventId != null) 'event_id': eventId,
         'response': response.toJson(),
       };
@@ -2614,6 +3075,40 @@ class InputAudioBufferSpeechStoppedEvent extends RealtimeEvent {
       };
 }
 
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  “input_audio_buffer.timeout_triggered” (server → client)                 */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+class InputAudioBufferTimeoutTriggeredEvent extends RealtimeEvent {
+  InputAudioBufferTimeoutTriggeredEvent({
+    required this.eventId,
+    required this.audioStartMs,
+    required this.audioEndMs,
+    required this.itemId,
+  }) : super('input_audio_buffer.timeout_triggered');
+
+  factory InputAudioBufferTimeoutTriggeredEvent.fromJson(Map<String, dynamic> j) => InputAudioBufferTimeoutTriggeredEvent(
+        eventId: j['event_id'] as String,
+        audioStartMs: (j['audio_start_ms'] as num).toInt(),
+        audioEndMs: (j['audio_end_ms'] as num).toInt(),
+        itemId: j['item_id'] as String,
+      );
+
+  final String eventId;
+  final int audioStartMs;
+  final int audioEndMs;
+  final String itemId;
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': type,
+        'event_id': eventId,
+        'audio_start_ms': audioStartMs,
+        'audio_end_ms': audioEndMs,
+        'item_id': itemId,
+      };
+}
+
 /// Result of POST /v1/realtime/client_secrets
 class CreateRealtimeClientSecretResponse {
   CreateRealtimeClientSecretResponse({
@@ -2699,12 +3194,16 @@ class RealtimeSession extends BaseRealtimeSession {
     super.temperature,
     this.maxOutputTokens,
     super.tracing,
+    this.truncation,
+    this.prompt,
   }) : super(object: 'realtime.session');
 
   final dynamic maxOutputTokens;
 
   final List<Modality>? outputModalities;
   final RealtimeSessionAudio? audio;
+  final RealtimeTruncation? truncation;
+  final Prompt? prompt;
 
   RealtimeSession copyWith({
     String? id,
@@ -2718,6 +3217,8 @@ class RealtimeSession extends BaseRealtimeSession {
     num? temperature,
     dynamic maxOutputTokens,
     Tracing? tracing,
+    RealtimeTruncation? truncation,
+    Prompt? prompt,
   }) {
     return RealtimeSession(
       id: id ?? this.id,
@@ -2729,6 +3230,8 @@ class RealtimeSession extends BaseRealtimeSession {
       temperature: temperature ?? this.temperature,
       maxOutputTokens: maxOutputTokens ?? this.maxOutputTokens,
       tracing: tracing ?? this.tracing,
+      truncation: truncation ?? this.truncation,
+      prompt: prompt ?? this.prompt,
     );
   }
 
@@ -2748,13 +3251,49 @@ class RealtimeSession extends BaseRealtimeSession {
         temperature: j["temperature"] == null ? null : (j['temperature'] as num?)?.toDouble(),
         maxOutputTokens: j["max_output_tokens"] == null ? null : j['max_output_tokens'],
         tracing: j['tracing'] == null ? null : Tracing.fromJson(j['tracing']),
+        truncation: j['truncation'] == null ? null : RealtimeTruncation.fromJson(j['truncation']),
+        prompt: j['prompt'] == null ? null : Prompt.fromJson(j['prompt']),
       );
 
-  Map<String, dynamic> toJson() => {
-        ...super.toJson(),
-        if (maxOutputTokens != null) 'max_output_tokens': maxOutputTokens,
-        "output_modalities": outputModalities?.map((e) => e.toJson()).toList()
-      };
+  @override
+  Map<String, dynamic> toJson() => super.toJson()
+    ..addAll({
+      'type': 'realtime',
+      if (maxOutputTokens != null) 'max_output_tokens': maxOutputTokens,
+      if (outputModalities != null) "output_modalities": outputModalities!.map((e) => e.toJson()).toList(),
+      if (truncation != null) 'truncation': truncation!.toJson(),
+      if (prompt != null) 'prompt': prompt!.toJson(),
+    });
+}
+
+/// Transcription-only realtime session.
+class RealtimeTranscriptionSession extends BaseRealtimeSession {
+  RealtimeTranscriptionSession({
+    required super.id,
+    this.expiresAt,
+    this.include,
+    this.audio,
+  }) : super(object: 'realtime.transcription_session');
+
+  factory RealtimeTranscriptionSession.fromJson(Map<String, dynamic> j) => RealtimeTranscriptionSession(
+        id: j['id'] as String,
+        expiresAt: (j['expires_at'] as num?)?.toInt(),
+        include: (j['include'] as List?)?.cast<String>(),
+        audio: j['audio'] == null ? null : RealtimeSessionAudio.fromJson(j['audio'] as Map<String, dynamic>),
+      );
+
+  final int? expiresAt;
+  final List<String>? include;
+  final RealtimeSessionAudio? audio;
+
+  @override
+  Map<String, dynamic> toJson() => super.toJson()
+    ..addAll({
+      'type': 'transcription',
+      if (expiresAt != null) 'expires_at': expiresAt,
+      if (include != null) 'include': include,
+      if (audio != null) 'audio': audio!.toJson(),
+    });
 }
 
 class RealtimeSessionAudio {

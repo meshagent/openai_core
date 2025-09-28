@@ -63,7 +63,7 @@ void main() {
         // 4. Make sure we can send commands over the wire
         wsCtrl.send(
           RealtimeResponseCreateEvent(
-            response: RealtimeResponse(
+            response: RealtimeResponseOptions(
               input: [
                 RealtimeMessageItem(
                   role: "user",
@@ -76,7 +76,7 @@ void main() {
         );
 
         await wsCtrl.serverEvents
-            .firstWhere((x) => x is ConversationItemCreatedEvent);
+            .firstWhere((x) => x is ConversationItemAddedEvent);
       },
     );
   });

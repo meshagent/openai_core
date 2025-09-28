@@ -142,12 +142,12 @@ abstract class RealtimeFunctionToolHandler extends RealtimeToolHandler<RealtimeF
             try {
               final output = await _doCall(controller, item);
               controller.send(RealtimeConversationItemCreateEvent(item: output, previousItemId: item.id));
-              controller.send(RealtimeResponseCreateEvent(response: RealtimeResponse()));
+              controller.send(RealtimeResponseCreateEvent(response: RealtimeResponseOptions()));
             } catch (err) {
               controller.send(RealtimeConversationItemCreateEvent(
                   item: RealtimeFunctionCallOutput(callId: item.callId, output: "Error: ${err}", status: "failed"),
                   previousItemId: item.id));
-              controller.send(RealtimeResponseCreateEvent(response: RealtimeResponse()));
+              controller.send(RealtimeResponseCreateEvent(response: RealtimeResponseOptions()));
             }
           }
         };

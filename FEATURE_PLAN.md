@@ -120,7 +120,7 @@ _This phase corrects the core data models to align with the GA specification, ad
 
 _This phase adds the missing data models and enhances existing ones to fully support the GA API's features._
 
-#### **Task 2.1: Enhance `RealtimeSession` Model**
+#### **Task 2.1 [✅ DONE]: Enhance `RealtimeSession` Model**
 
 - **Description:** Add the missing `truncation` and `prompt` properties to the `RealtimeSession` class.
 - **Files to Create/Modify:**

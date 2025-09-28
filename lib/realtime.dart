@@ -177,6 +177,20 @@ abstract class RealtimeTruncation {
   const RealtimeTruncation();
 
   dynamic toJson();
+
+  factory RealtimeTruncation.fromJson(dynamic raw) {
+    if (raw is String) {
+      if (raw == 'auto') return const RealtimeTruncationAuto();
+      if (raw == 'disabled') return const RealtimeTruncationDisabled();
+    }
+    if (raw is Map<String, dynamic>) {
+      if (raw['type'] == 'retention_ratio') {
+        return RealtimeTruncationRatio.fromJson(raw);
+      }
+    }
+    // Fallback or error for unknown types
+    throw ArgumentError('Unexpected RealtimeTruncation value: $raw');
+  }
 }
 
 class RealtimeTruncationAuto extends RealtimeTruncation {
@@ -197,6 +211,12 @@ class RealtimeTruncationDisabled extends RealtimeTruncation {
 
 class RealtimeTruncationRatio extends RealtimeTruncation {
   const RealtimeTruncationRatio({required this.ratio});
+
+  factory RealtimeTruncationRatio.fromJson(Map<String, dynamic> json) {
+    return RealtimeTruncationRatio(
+      ratio: (json['retention_ratio'] as num).toDouble(),
+    );
+  }
 
   final double ratio;
 
@@ -2840,12 +2860,16 @@ class RealtimeSession extends BaseRealtimeSession {
     super.temperature,
     this.maxOutputTokens,
     super.tracing,
+    this.truncation,
+    this.prompt,
   }) : super(object: 'realtime.session');
 
   final dynamic maxOutputTokens;
 
   final List<Modality>? outputModalities;
   final RealtimeSessionAudio? audio;
+  final RealtimeTruncation? truncation;
+  final Prompt? prompt;
 
   RealtimeSession copyWith({
     String? id,
@@ -2859,6 +2883,8 @@ class RealtimeSession extends BaseRealtimeSession {
     num? temperature,
     dynamic maxOutputTokens,
     Tracing? tracing,
+    RealtimeTruncation? truncation,
+    Prompt? prompt,
   }) {
     return RealtimeSession(
       id: id ?? this.id,
@@ -2870,6 +2896,8 @@ class RealtimeSession extends BaseRealtimeSession {
       temperature: temperature ?? this.temperature,
       maxOutputTokens: maxOutputTokens ?? this.maxOutputTokens,
       tracing: tracing ?? this.tracing,
+      truncation: truncation ?? this.truncation,
+      prompt: prompt ?? this.prompt,
     );
   }
 
@@ -2889,13 +2917,18 @@ class RealtimeSession extends BaseRealtimeSession {
         temperature: j["temperature"] == null ? null : (j['temperature'] as num?)?.toDouble(),
         maxOutputTokens: j["max_output_tokens"] == null ? null : j['max_output_tokens'],
         tracing: j['tracing'] == null ? null : Tracing.fromJson(j['tracing']),
+        truncation: j['truncation'] == null ? null : RealtimeTruncation.fromJson(j['truncation']),
+        prompt: j['prompt'] == null ? null : Prompt.fromJson(j['prompt']),
       );
 
-  Map<String, dynamic> toJson() => {
-        ...super.toJson(),
-        if (maxOutputTokens != null) 'max_output_tokens': maxOutputTokens,
-        "output_modalities": outputModalities?.map((e) => e.toJson()).toList()
-      };
+  @override
+  Map<String, dynamic> toJson() => super.toJson()
+    ..addAll({
+      if (maxOutputTokens != null) 'max_output_tokens': maxOutputTokens,
+      if (outputModalities != null) "output_modalities": outputModalities!.map((e) => e.toJson()).toList(),
+      if (truncation != null) 'truncation': truncation!.toJson(),
+      if (prompt != null) 'prompt': prompt!.toJson(),
+    });
 }
 
 class RealtimeSessionAudio {

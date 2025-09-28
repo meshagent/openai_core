@@ -763,8 +763,6 @@ abstract class RealtimeEvent {
         return RealtimeResponseCreateEvent.fromJson(j);
       case 'response.done':
         return RealtimeResponseDoneEvent.fromJson(j);
-      case 'response.cancelled':
-        return RealtimeResponseCancelledEvent.fromJson(j);
 
       case 'response.output_item.added':
         return RealtimeResponseOutputItemAddedEvent.fromJson(j);
@@ -2400,31 +2398,6 @@ class RealtimeResponseCreatedEvent extends RealtimeEvent {
   @override
   Map<String, dynamic> toJson() => {
         'type': type, // "response.created"
-        if (eventId != null) 'event_id': eventId,
-        'response': response.toJson(),
-      };
-}
-
-class RealtimeResponseCancelledEvent extends RealtimeEvent {
-  RealtimeResponseCancelledEvent({
-    this.eventId,
-    required this.response,
-  }) : super('response.create');
-
-  /* ---------- factory ---------- */
-  factory RealtimeResponseCancelledEvent.fromJson(Map<String, dynamic> j) => RealtimeResponseCancelledEvent(
-        eventId: j['event_id'],
-        response: RealtimeResponseOptions.fromJson(j['response'] as Map<String, dynamic>),
-      );
-
-  /* ---------- data ---------- */
-  final String? eventId;
-  final RealtimeResponseOptions response;
-
-  /* ---------- serialise ---------- */
-  @override
-  Map<String, dynamic> toJson() => {
-        'type': type, // "response.create"
         if (eventId != null) 'event_id': eventId,
         'response': response.toJson(),
       };

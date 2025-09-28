@@ -211,7 +211,7 @@ _This phase implements the logic for handling new events, corrects existing even
   - It should include an optional `String? response_id` property.
 - **Depends On:** `None`
 
-#### **Task 3.4: Remove Incorrect `RealtimeResponseCancelledEvent`**
+#### **Task 3.4 [✅ DONE]: Remove Incorrect `RealtimeResponseCancelledEvent`**
 
 - **Description:** Remove the non-existent server-side `response.cancelled` event handling logic.
 - **Files to Create/Modify:**

@@ -1427,6 +1427,105 @@ class RealtimeResponseStatusDetailsError {
       };
 }
 
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  Transcription Usage Models                                               */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+/// Details about the input tokens used for transcription.
+class InputTokenDetails {
+  const InputTokenDetails({
+    required this.textTokens,
+    required this.audioTokens,
+  });
+
+  factory InputTokenDetails.fromJson(Map<String, dynamic> j) => InputTokenDetails(
+        textTokens: (j['text_tokens'] as num).toInt(),
+        audioTokens: (j['audio_tokens'] as num).toInt(),
+      );
+
+  final int textTokens;
+  final int audioTokens;
+
+  Map<String, dynamic> toJson() => {
+        'text_tokens': textTokens,
+        'audio_tokens': audioTokens,
+      };
+}
+
+/// Base class for polymorphic transcription usage statistics.
+abstract class TranscriptionUsage {
+  const TranscriptionUsage(this.type);
+
+  final String type;
+
+  /// Serialise to JSON.
+  Map<String, dynamic> toJson();
+
+  /// Deserialise from JSON, dispatching to the correct concrete class.
+  factory TranscriptionUsage.fromJson(Map<String, dynamic> j) {
+    switch (j['type']) {
+      case 'tokens':
+        return TranscriptionUsageTokens.fromJson(j);
+      case 'duration':
+        return TranscriptionUsageDuration.fromJson(j);
+      default:
+        // Handle unknown types gracefully if necessary
+        throw ArgumentError('Unknown TranscriptionUsage type: "${j['type']}"');
+    }
+  }
+}
+
+/// Usage statistics for transcription models billed by token count.
+class TranscriptionUsageTokens extends TranscriptionUsage {
+  const TranscriptionUsageTokens({
+    required this.inputTokens,
+    this.inputTokenDetails,
+    required this.outputTokens,
+    required this.totalTokens,
+  }) : super('tokens');
+
+  factory TranscriptionUsageTokens.fromJson(Map<String, dynamic> j) => TranscriptionUsageTokens(
+        inputTokens: (j['input_tokens'] as num).toInt(),
+        inputTokenDetails:
+            j['input_token_details'] == null ? null : InputTokenDetails.fromJson(j['input_token_details'] as Map<String, dynamic>),
+        outputTokens: (j['output_tokens'] as num).toInt(),
+        totalTokens: (j['total_tokens'] as num).toInt(),
+      );
+
+  final int inputTokens;
+  final InputTokenDetails? inputTokenDetails;
+  final int outputTokens;
+  final int totalTokens;
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': type,
+        'input_tokens': inputTokens,
+        if (inputTokenDetails != null) 'input_token_details': inputTokenDetails!.toJson(),
+        'output_tokens': outputTokens,
+        'total_tokens': totalTokens,
+      };
+}
+
+/// Usage statistics for transcription models billed by audio duration.
+class TranscriptionUsageDuration extends TranscriptionUsage {
+  const TranscriptionUsageDuration({
+    required this.seconds,
+  }) : super('duration');
+
+  factory TranscriptionUsageDuration.fromJson(Map<String, dynamic> j) => TranscriptionUsageDuration(
+        seconds: j['seconds'] as num,
+      );
+
+  final num seconds;
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': type,
+        'seconds': seconds,
+      };
+}
+
 class RealtimeResponseStatusDetails {
   const RealtimeResponseStatusDetails({this.type, this.reason, this.error});
 

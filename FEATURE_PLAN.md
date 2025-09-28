@@ -131,7 +131,7 @@ _This phase adds the missing data models and enhances existing ones to fully sup
   - Update the `RealtimeSession.fromJson` factory and `toJson` method to handle these new fields.
 - **Depends On:** `Task 1.5`
 
-#### **Task 2.2: Create `TranscriptionUsage` Model Hierarchy**
+#### **Task 2.2 [✅ DONE]: Create `TranscriptionUsage` Model Hierarchy**
 
 - **Description:** Create a new set of classes to accurately model the polymorphic `usage` object for transcription events.
 - **Files to Create/Modify:**

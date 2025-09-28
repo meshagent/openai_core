@@ -73,8 +73,7 @@ void main() {
       final session = ResponsesSessionController(
         client: client,
         tools: [shellTool],
-        // Use the gpt-5-codex model via a raw ChatModel identifier.
-        model: ChatModel.fromJson('gpt-5-codex'),
+        model: ChatModel.gpt5Codex,
         // Let the controller iterate over SSE events and handle tool calls.
         stream: false,
         // Store conversation state on the server between rounds.
@@ -124,7 +123,7 @@ void main() {
         client: client,
         tools: [shellTool],
         // Use the gpt-5-codex model via a raw ChatModel identifier.
-        model: ChatModel.fromJson('gpt-5-codex'),
+        model: ChatModel.gpt5Codex,
         // Let the controller iterate over SSE events and handle tool calls.
         stream: true,
         // Store conversation state on the server between rounds.

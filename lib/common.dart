@@ -114,6 +114,7 @@ class JsonEnum {
 class ChatModel extends JsonEnum {
   // ── gpt-5 family ───────────────────────────────────────────────────────
   static const gpt5 = ChatModel('gpt-5');
+  static const gpt5Codex = ChatModel('gpt-5-codex');
   static const gpt5Mini = ChatModel('gpt-5-mini');
   static const gpt5Nano = ChatModel('gpt-5-nano');
   static const gpt5_2025_08_07 = ChatModel('gpt-5-2025-08-07');

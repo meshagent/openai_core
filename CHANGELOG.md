@@ -1,3 +1,9 @@
+# 0.9.0
+
+add mcp test for responses session
+don't forward reasoning items in ResponsesSessionController, add codex test
+improve mcp and local tool shell support, add realtime mcp tool handler
+
 # 0.8.0
 
 Add support for realtime usage, add more realtime events

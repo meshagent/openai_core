@@ -143,7 +143,7 @@ _This phase adds the missing data models and enhances existing ones to fully sup
   - The `TranscriptionUsageTokens` class should include a nested class `InputTokenDetails` to handle the `input_token_details` object.
 - **Depends On:** `None`
 
-#### **Task 2.3: Update Transcription Completion Event with Correct Usage Model**
+#### **Task 2.3 [✅ DONE]: Update Transcription Completion Event with Correct Usage Model**
 
 - **Description:** Add the new `TranscriptionUsage` model to the `ConversationItemInputAudioTranscriptionCompletedEvent`.
 - **Files to Create/Modify:**

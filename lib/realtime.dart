@@ -1918,6 +1918,7 @@ class ConversationItemInputAudioTranscriptionCompletedEvent extends RealtimeEven
     required this.contentIndex,
     required this.transcript,
     this.logprobs,
+    this.usage,
   }) : super('conversation.item.input_audio_transcription.completed');
 
   factory ConversationItemInputAudioTranscriptionCompletedEvent.fromJson(Map<String, dynamic> j) =>
@@ -1927,6 +1928,7 @@ class ConversationItemInputAudioTranscriptionCompletedEvent extends RealtimeEven
         contentIndex: j['content_index'] as int,
         transcript: j['transcript'] as String,
         logprobs: j['logprobs'] == null ? null : LogProbs.fromJson(j['logprobs']),
+        usage: j['usage'] == null ? null : TranscriptionUsage.fromJson(j['usage'] as Map<String, dynamic>),
       );
 
   /// Unique server-generated ID for this event.
@@ -1944,6 +1946,9 @@ class ConversationItemInputAudioTranscriptionCompletedEvent extends RealtimeEven
   /// Optional per-token / per-word log-probabilities (see `common.dart`).
   final LogProbs? logprobs;
 
+  /// Usage statistics for the transcription, billed according to the ASR model's pricing.
+  final TranscriptionUsage? usage;
+
   @override
   Map<String, dynamic> toJson() => {
         'type': type,
@@ -1952,6 +1957,7 @@ class ConversationItemInputAudioTranscriptionCompletedEvent extends RealtimeEven
         'content_index': contentIndex,
         'transcript': transcript,
         if (logprobs != null) 'logprobs': logprobs!.toJson(),
+        if (usage != null) 'usage': usage!.toJson(),
       };
 }
 

@@ -1250,6 +1250,46 @@ class RealtimeConversationItemCreateEvent extends RealtimeEvent {
 /*  “response.create”  –  trigger model inference                            */
 /* ────────────────────────────────────────────────────────────────────────── */
 
+class ResponseAudioOutputOptions {
+  const ResponseAudioOutputOptions({
+    this.format,
+    this.voice,
+  });
+
+  factory ResponseAudioOutputOptions.fromJson(Map<String, dynamic> json) {
+    return ResponseAudioOutputOptions(
+      format: json['format'] == null ? null : AudioFormat.fromJson(json['format']),
+      voice: json['voice'] == null ? null : SpeechVoice.fromJson(json['voice']),
+    );
+  }
+
+  final AudioFormat? format;
+  final SpeechVoice? voice;
+
+  Map<String, dynamic> toJson() => {
+        if (format != null) 'format': format!.toJson(),
+        if (voice != null) 'voice': voice!.toJson(),
+      };
+}
+
+class ResponseAudioOptions {
+  const ResponseAudioOptions({
+    this.output,
+  });
+
+  factory ResponseAudioOptions.fromJson(Map<String, dynamic> json) {
+    return ResponseAudioOptions(
+      output: json['output'] == null ? null : ResponseAudioOutputOptions.fromJson(json['output']),
+    );
+  }
+
+  final ResponseAudioOutputOptions? output;
+
+  Map<String, dynamic> toJson() => {
+        if (output != null) 'output': output!.toJson(),
+      };
+}
+
 /// Per-request inference parameters (override session defaults **only**
 /// for this single response).
 class RealtimeResponseOptions {
@@ -1259,12 +1299,11 @@ class RealtimeResponseOptions {
     this.instructions,
     this.maxOutputTokens, // int | "inf"
     this.metadata,
-    this.modalities,
-    this.outputAudioFormat,
-    this.temperature,
+    this.outputModalities,
+    this.audio,
+    this.prompt,
     this.toolChoice,
     this.tools,
-    this.voice,
   });
 
   /* ---------- factory fromJson ---------- */
@@ -1278,13 +1317,13 @@ class RealtimeResponseOptions {
         instructions: j['instructions'],
         maxOutputTokens: j['max_output_tokens'],
         metadata: j['metadata']?.cast<String, dynamic>(),
-        modalities:
-            j['modalities'] == null ? null : (j['modalities'] as List).map<Modality>((m) => Modality.fromJson(m as String)).toList(),
-        outputAudioFormat: j['output_audio_format'] == null ? null : AudioFormat.fromJson(j['output_audio_format']),
-        temperature: (j['temperature'] as num?)?.toDouble(),
+        outputModalities: j['output_modalities'] == null
+            ? null
+            : (j['output_modalities'] as List).map<Modality>((m) => Modality.fromJson(m as String)).toList(),
+        audio: j['audio'] == null ? null : ResponseAudioOptions.fromJson(j['audio']),
+        prompt: j['prompt'] == null ? null : Prompt.fromJson(j['prompt']),
         toolChoice: j['tool_choice'] == null ? null : ToolChoice.fromJson(j['tool_choice']),
         tools: j['tools'] == null ? null : (j['tools'] as List).cast<Map<String, dynamic>>().map(RealtimeTool.fromJson).toList(),
-        voice: j['voice'] == null ? null : SpeechVoice.fromJson(j['voice']),
       );
 
   /* ---------- data ---------- */
@@ -1293,12 +1332,11 @@ class RealtimeResponseOptions {
   final String? instructions;
   final dynamic maxOutputTokens; // int | "inf"
   final Map<String, dynamic>? metadata; // ≤16 kv-pairs
-  final List<Modality>? modalities;
-  final AudioFormat? outputAudioFormat;
-  final num? temperature;
+  final List<Modality>? outputModalities;
+  final ResponseAudioOptions? audio;
+  final Prompt? prompt;
   final ToolChoice? toolChoice;
   final List<RealtimeTool>? tools;
-  final SpeechVoice? voice;
 
   /* ---------- serialise ---------- */
   Map<String, dynamic> toJson() => {
@@ -1307,12 +1345,11 @@ class RealtimeResponseOptions {
         if (instructions != null) 'instructions': instructions,
         if (maxOutputTokens != null) 'max_output_tokens': maxOutputTokens,
         if (metadata != null) 'metadata': metadata,
-        if (modalities != null) 'modalities': modalities!.map((m) => m.toJson()).toList(),
-        if (outputAudioFormat != null) 'output_audio_format': outputAudioFormat!.toJson(),
-        if (temperature != null) 'temperature': temperature,
+        if (outputModalities != null) 'output_modalities': outputModalities!.map((m) => m.toJson()).toList(),
+        if (audio != null) 'audio': audio!.toJson(),
+        if (prompt != null) 'prompt': prompt!.toJson(),
         if (toolChoice != null) 'tool_choice': toolChoice!.toJson(),
         if (tools != null) 'tools': tools!.map((t) => t.toJson()).toList(),
-        if (voice != null) 'voice': voice!.toJson(),
       };
 }
 

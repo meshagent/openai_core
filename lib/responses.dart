@@ -1163,7 +1163,7 @@ class Response {
   final ChatModel? model;
   final bool? parallelToolCalls;
   final String? previousResponseId;
-  final Map<String, dynamic>? prompt;
+  final Prompt? prompt;
   final ReasoningOptions? reasoning;
   final ServiceTier? serviceTier;
 
@@ -1241,7 +1241,7 @@ class Response {
         if (model != null) 'model': model?.toJson(),
         if (parallelToolCalls != null) 'parallel_tool_calls': parallelToolCalls,
         if (previousResponseId != null) 'previous_response_id': previousResponseId,
-        if (prompt != null) 'prompt': prompt,
+        if (prompt != null) 'prompt': prompt!.toJson(),
         if (reasoning != null) 'reasoning': reasoning!.toJson(),
         if (serviceTier != null) 'service_tier': serviceTier!.toJson(),
         if (status != null) 'status': status,
@@ -1270,7 +1270,7 @@ class Response {
         model: json['model'] != null ? ChatModel.fromJson(json['model']) : null,
         parallelToolCalls: json['parallel_tool_calls'] as bool?,
         previousResponseId: json['previous_response_id'] as String?,
-        prompt: json['prompt'] as Map<String, dynamic>?,
+        prompt: json['prompt'] == null ? null : Prompt.fromJson(json['prompt']),
         reasoning: json['reasoning'] == null ? null : ReasoningOptions.fromJson(json['reasoning'] as Map<String, dynamic>),
         serviceTier: json['service_tier'] == null ? null : ServiceTier.fromJson(json['service_tier'] as String),
         status: json['status'] as String?,
@@ -4046,5 +4046,58 @@ class ErrorEvent extends ResponseEvent {
         'message': message,
         if (param != null) 'param': param,
         if (sequenceNumber != null) 'sequence_number': sequenceNumber,
+      };
+}
+
+class ResponsePromptVariables {
+  const ResponsePromptVariables(this.variables);
+
+  factory ResponsePromptVariables.fromJson(Map<String, dynamic> json) {
+    return ResponsePromptVariables(json.map((key, value) {
+      if (value is String) {
+        return MapEntry(key, value);
+      }
+      if (value is Map<String, dynamic>) {
+        return MapEntry(key, ResponseContent.fromJson(value));
+      }
+      return MapEntry(key, value);
+    }));
+  }
+
+  final Map<String, dynamic> variables;
+
+  Map<String, dynamic> toJson() {
+    return variables.map((key, value) {
+      if (value is ResponseContent) {
+        return MapEntry(key, value.toJson());
+      }
+      return MapEntry(key, value);
+    });
+  }
+}
+
+class Prompt {
+  const Prompt({
+    required this.id,
+    this.version,
+    this.variables,
+  });
+
+  factory Prompt.fromJson(Map<String, dynamic> json) {
+    return Prompt(
+      id: json['id'] as String,
+      version: json['version'] as String?,
+      variables: json['variables'] == null ? null : ResponsePromptVariables.fromJson(json['variables'] as Map<String, dynamic>),
+    );
+  }
+
+  final String id;
+  final String? version;
+  final ResponsePromptVariables? variables;
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        if (version != null) 'version': version,
+        if (variables != null) 'variables': variables!.toJson(),
       };
 }

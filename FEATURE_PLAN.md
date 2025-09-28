@@ -70,7 +70,7 @@ _This phase corrects the core data models to align with the GA specification, ad
   - Perform a project-wide find-and-replace for the class name. This will cause temporary compilation errors that will be resolved in subsequent tasks.
 - **Depends On:** `None`
 
-#### **Task 1.2: Refactor `RealtimeResponseOptions` Structure**
+#### **Task 1.2 [✅ DONE]: Refactor `RealtimeResponseOptions` Structure**
 
 - **Description:** Modify the newly renamed `RealtimeResponseOptions` to precisely match the `RealtimeResponseCreateParams` schema from the spec.
 - **Files to Create/Modify:**

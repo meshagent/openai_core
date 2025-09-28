@@ -1983,7 +1983,7 @@ class ConversationItemAddedEvent extends RealtimeEvent {
     required this.eventId,
     required this.item,
     this.previousItemId,
-  }) : super('conversation.item.created');
+  }) : super('conversation.item.added');
 
   factory ConversationItemAddedEvent.fromJson(Map<String, dynamic> j) => ConversationItemAddedEvent(
         eventId: j['event_id'] as String,

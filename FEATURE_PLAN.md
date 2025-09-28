@@ -221,7 +221,7 @@ _This phase implements the logic for handling new events, corrects existing even
   - Remove the `'response.cancelled'` case from the `RealtimeEvent.fromJson` factory.
 - **Depends On:** `None`
 
-#### **Task 3.5: Correct `ConversationItemAddedEvent` Type**
+#### **Task 3.5 [✅ DONE]: Correct `ConversationItemAddedEvent` Type**
 
 - **Description:** Fix the bug in the `ConversationItemAddedEvent` where the wrong event type string is used.
 - **Files to Create/Modify:**

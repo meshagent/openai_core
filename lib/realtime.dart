@@ -1526,6 +1526,126 @@ class TranscriptionUsageDuration extends TranscriptionUsage {
       };
 }
 
+/* ────────────────────────────────────────────────────────────────────────── */
+/*  Realtime Response Usage Models                                           */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+/// Details about cached tokens used as input for a response.
+class CachedTokenDetails {
+  const CachedTokenDetails({
+    required this.textTokens,
+    required this.imageTokens,
+    required this.audioTokens,
+  });
+
+  factory CachedTokenDetails.fromJson(Map<String, dynamic> j) => CachedTokenDetails(
+        textTokens: (j['text_tokens'] as num).toInt(),
+        imageTokens: (j['image_tokens'] as num).toInt(),
+        audioTokens: (j['audio_tokens'] as num).toInt(),
+      );
+
+  final int textTokens;
+  final int imageTokens;
+  final int audioTokens;
+
+  Map<String, dynamic> toJson() => {
+        'text_tokens': textTokens,
+        'image_tokens': imageTokens,
+        'audio_tokens': audioTokens,
+      };
+}
+
+/// Details about the input tokens used in a response.
+class ResponseInputTokenDetails {
+  const ResponseInputTokenDetails({
+    required this.cachedTokens,
+    required this.textTokens,
+    required this.imageTokens,
+    required this.audioTokens,
+    this.cachedTokensDetails,
+  });
+
+  factory ResponseInputTokenDetails.fromJson(Map<String, dynamic> j) => ResponseInputTokenDetails(
+        cachedTokens: (j['cached_tokens'] as num).toInt(),
+        textTokens: (j['text_tokens'] as num).toInt(),
+        imageTokens: (j['image_tokens'] as num).toInt(),
+        audioTokens: (j['audio_tokens'] as num).toInt(),
+        cachedTokensDetails:
+            j['cached_tokens_details'] == null ? null : CachedTokenDetails.fromJson(j['cached_tokens_details'] as Map<String, dynamic>),
+      );
+
+  final int cachedTokens;
+  final int textTokens;
+  final int imageTokens;
+  final int audioTokens;
+  final CachedTokenDetails? cachedTokensDetails;
+
+  Map<String, dynamic> toJson() => {
+        'cached_tokens': cachedTokens,
+        'text_tokens': textTokens,
+        'image_tokens': imageTokens,
+        'audio_tokens': audioTokens,
+        if (cachedTokensDetails != null) 'cached_tokens_details': cachedTokensDetails!.toJson(),
+      };
+}
+
+/// Details about the output tokens used in a response.
+class ResponseOutputTokenDetails {
+  const ResponseOutputTokenDetails({
+    required this.textTokens,
+    required this.audioTokens,
+  });
+
+  factory ResponseOutputTokenDetails.fromJson(Map<String, dynamic> j) => ResponseOutputTokenDetails(
+        textTokens: (j['text_tokens'] as num).toInt(),
+        audioTokens: (j['audio_tokens'] as num).toInt(),
+      );
+
+  final int textTokens;
+  final int audioTokens;
+
+  Map<String, dynamic> toJson() => {
+        'text_tokens': textTokens,
+        'audio_tokens': audioTokens,
+      };
+}
+
+/// Usage statistics for a `RealtimeResponse`.
+class RealtimeResponseUsage {
+  const RealtimeResponseUsage({
+    required this.totalTokens,
+    required this.inputTokens,
+    required this.outputTokens,
+    this.inputTokenDetails,
+    this.outputTokenDetails,
+  });
+
+  factory RealtimeResponseUsage.fromJson(Map<String, dynamic> j) => RealtimeResponseUsage(
+        totalTokens: (j['total_tokens'] as num).toInt(),
+        inputTokens: (j['input_tokens'] as num).toInt(),
+        outputTokens: (j['output_tokens'] as num).toInt(),
+        inputTokenDetails:
+            j['input_token_details'] == null ? null : ResponseInputTokenDetails.fromJson(j['input_token_details'] as Map<String, dynamic>),
+        outputTokenDetails: j['output_token_details'] == null
+            ? null
+            : ResponseOutputTokenDetails.fromJson(j['output_token_details'] as Map<String, dynamic>),
+      );
+
+  final int totalTokens;
+  final int inputTokens;
+  final int outputTokens;
+  final ResponseInputTokenDetails? inputTokenDetails;
+  final ResponseOutputTokenDetails? outputTokenDetails;
+
+  Map<String, dynamic> toJson() => {
+        'total_tokens': totalTokens,
+        'input_tokens': inputTokens,
+        'output_tokens': outputTokens,
+        if (inputTokenDetails != null) 'input_token_details': inputTokenDetails!.toJson(),
+        if (outputTokenDetails != null) 'output_token_details': outputTokenDetails!.toJson(),
+      };
+}
+
 class RealtimeResponseStatusDetails {
   const RealtimeResponseStatusDetails({this.type, this.reason, this.error});
 
@@ -1572,7 +1692,7 @@ class RealtimeResponse {
       output: (json['output'] as List?)?.map((item) => RealtimeConversationItem.fromJson(item)).toList(),
       metadata: json['metadata'] as Map<String, dynamic>?,
       audio: json['audio'] == null ? null : ResponseAudioOptions.fromJson(json['audio']),
-      usage: json['usage'] == null ? null : Usage.fromJson(json['usage']),
+      usage: json['usage'] == null ? null : RealtimeResponseUsage.fromJson(json['usage']),
       conversationId: json['conversation_id'] as String?,
       outputModalities: (json['output_modalities'] as List?)?.map((m) => Modality.fromJson(m)).toList(),
       maxOutputTokens: json['max_output_tokens'],
@@ -1586,7 +1706,7 @@ class RealtimeResponse {
   final List<RealtimeConversationItem>? output;
   final Map<String, dynamic>? metadata;
   final ResponseAudioOptions? audio;
-  final Usage? usage;
+  final RealtimeResponseUsage? usage;
   final String? conversationId;
   final List<Modality>? outputModalities;
   final dynamic maxOutputTokens;

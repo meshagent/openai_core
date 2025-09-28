@@ -116,7 +116,7 @@ _This phase corrects the core data models to align with the GA specification, ad
 
 ---
 
-### **Phase 2: Session and Event Model Enhancements**
+### **Phase 2 [✅ DONE]: Session and Event Model Enhancements**
 
 _This phase adds the missing data models and enhances existing ones to fully support the GA API's features._
 
@@ -163,7 +163,7 @@ _This phase adds the missing data models and enhances existing ones to fully sup
   - It should model the `RealtimeTranscriptionSessionCreateResponseGA` schema, including properties like `type` (hardcoded to `'transcription'`), `audio`, and `include`.
 - **Depends On:** `None`
 
-#### **Task 2.5: Create `RealtimeResponseUsage` Model**
+#### **Task 2.5 [✅ DONE]: Create `RealtimeResponseUsage` Model**
 
 - **Description:** Create a new class hierarchy to accurately model the `usage` object within the `RealtimeResponse`.
 - **Files to Create/Modify:**

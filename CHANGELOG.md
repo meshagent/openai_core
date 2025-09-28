@@ -1,3 +1,7 @@
+# 0.8.0
+
+Add support for realtime usage, add more realtime events
+
 # 0.7.0
 
 Improve support for GA Realtime API

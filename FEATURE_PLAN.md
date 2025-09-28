@@ -93,7 +93,7 @@ _This phase corrects the core data models to align with the GA specification, ad
   - The `usage` field will be typed with a new `RealtimeResponseUsage` class, which will be created in Phase 2. For now we could use the `Usage` class from `common.dart`.
 - **Depends On:** `Task 1.1`
 
-#### **Task 1.4: Update Events to Use the New `RealtimeResponse`**
+#### **Task 1.4 [✅ DONE]: Update Events to Use the New `RealtimeResponse`**
 
 - **Description:** Update all event classes that carry a response object to use the new, correct `RealtimeResponse` model.
 - **Files to Create/Modify:**

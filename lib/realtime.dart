@@ -2054,17 +2054,17 @@ class RealtimeResponseCreatedEvent extends RealtimeEvent {
   /* ---------- factory ---------- */
   factory RealtimeResponseCreatedEvent.fromJson(Map<String, dynamic> j) => RealtimeResponseCreatedEvent(
         eventId: j['event_id'],
-        response: RealtimeResponseOptions.fromJson(j['response'] as Map<String, dynamic>),
+        response: RealtimeResponse.fromJson(j['response'] as Map<String, dynamic>),
       );
 
   /* ---------- data ---------- */
   final String? eventId;
-  final RealtimeResponseOptions response;
+  final RealtimeResponse response;
 
   /* ---------- serialise ---------- */
   @override
   Map<String, dynamic> toJson() => {
-        'type': type, // "response.create"
+        'type': type, // "response.created"
         if (eventId != null) 'event_id': eventId,
         'response': response.toJson(),
       };
@@ -2104,17 +2104,17 @@ class RealtimeResponseDoneEvent extends RealtimeEvent {
   /* ---------- factory ---------- */
   factory RealtimeResponseDoneEvent.fromJson(Map<String, dynamic> j) => RealtimeResponseDoneEvent(
         eventId: j['event_id'],
-        response: RealtimeResponseOptions.fromJson(j['response'] as Map<String, dynamic>),
+        response: RealtimeResponse.fromJson(j['response'] as Map<String, dynamic>),
       );
 
   /* ---------- data ---------- */
   final String? eventId;
-  final RealtimeResponseOptions response;
+  final RealtimeResponse response;
 
   /* ---------- serialise ---------- */
   @override
   Map<String, dynamic> toJson() => {
-        'type': type, // "response.create"
+        'type': type, // "response.done"
         if (eventId != null) 'event_id': eventId,
         'response': response.toJson(),
       };

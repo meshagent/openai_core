@@ -3029,10 +3029,41 @@ class RealtimeSession extends BaseRealtimeSession {
   @override
   Map<String, dynamic> toJson() => super.toJson()
     ..addAll({
+      'type': 'realtime',
       if (maxOutputTokens != null) 'max_output_tokens': maxOutputTokens,
       if (outputModalities != null) "output_modalities": outputModalities!.map((e) => e.toJson()).toList(),
       if (truncation != null) 'truncation': truncation!.toJson(),
       if (prompt != null) 'prompt': prompt!.toJson(),
+    });
+}
+
+/// Transcription-only realtime session.
+class RealtimeTranscriptionSession extends BaseRealtimeSession {
+  RealtimeTranscriptionSession({
+    required super.id,
+    this.expiresAt,
+    this.include,
+    this.audio,
+  }) : super(object: 'realtime.transcription_session');
+
+  factory RealtimeTranscriptionSession.fromJson(Map<String, dynamic> j) => RealtimeTranscriptionSession(
+        id: j['id'] as String,
+        expiresAt: (j['expires_at'] as num?)?.toInt(),
+        include: (j['include'] as List?)?.cast<String>(),
+        audio: j['audio'] == null ? null : RealtimeSessionAudio.fromJson(j['audio'] as Map<String, dynamic>),
+      );
+
+  final int? expiresAt;
+  final List<String>? include;
+  final RealtimeSessionAudio? audio;
+
+  @override
+  Map<String, dynamic> toJson() => super.toJson()
+    ..addAll({
+      'type': 'transcription',
+      if (expiresAt != null) 'expires_at': expiresAt,
+      if (include != null) 'include': include,
+      if (audio != null) 'audio': audio!.toJson(),
     });
 }
 

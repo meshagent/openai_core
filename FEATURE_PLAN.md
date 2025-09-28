@@ -153,7 +153,7 @@ _This phase adds the missing data models and enhances existing ones to fully sup
   - Update its `fromJson` factory to use the new `TranscriptionUsage.fromJson` factory.
 - **Depends On:** `Task 2.2`
 
-#### **Task 2.4: Create `RealtimeTranscriptionSession` Class**
+#### **Task 2.4 [✅ DONE]: Create `RealtimeTranscriptionSession` Class**
 
 - **Description:** Implement the `RealtimeTranscriptionSession` class to support transcription-only sessions.
 - **Files to Create/Modify:**

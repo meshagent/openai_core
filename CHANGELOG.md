@@ -1,4 +1,4 @@
-# 0.9.1
+# 0.10.0
 
 Add gpt-5-codex to ChatModel
 

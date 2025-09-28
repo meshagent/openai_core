@@ -44,13 +44,14 @@ class OpenAIClient {
     return await Response.fromStream(stream);
   }
 
-  Future<Response> postJson(String path, Map<String, dynamic> body, {Map<String, String>? headers}) async {
+  Future<Response> postJson(String path, Map<String, dynamic> body, {String? contentType, Map<String, String>? headers}) async {
     if (path.startsWith("/")) {
       path = path.substring(1);
     }
     final url = baseUrl.resolve(path);
     final bodyText = jsonEncode(body);
-    return httpClient.post(url, headers: getHeaders({"content-type": "application/json", if (headers != null) ...headers}), body: bodyText);
+    return httpClient.post(url,
+        headers: getHeaders({"content-type": contentType ?? "application/json", if (headers != null) ...headers}), body: bodyText);
   }
 
   SseClient streamJson(String path, Map<String, dynamic> body, {Map<String, String>? headers}) {

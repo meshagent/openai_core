@@ -1,3 +1,7 @@
+# 0.6.0
+
+Add support for GA Realtime API
+
 # 0.5.0
 
 Add support for returning files, images, and responses content types from tool calls

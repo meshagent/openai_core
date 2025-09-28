@@ -28,7 +28,7 @@ abstract class RealtimeSessionController {
 
     _ready.future.then((_) {
       if (initialTools != null) {
-        send(SessionUpdateEvent(session: RealtimeSessionUpdate(tools: [...initialTools.map((t) => t.metadata)])));
+        send(SessionUpdateEvent(session: RealtimeSession(tools: [...initialTools.map((t) => t.metadata)])));
       }
     });
   }
@@ -76,7 +76,7 @@ abstract class RealtimeSessionController {
     for (final tool in tools) {
       this._tools[tool.metadata.name] = tool;
     }
-    updateSession(RealtimeSessionUpdate(tools: [...this._tools.values.map((t) => t.metadata)]));
+    updateSession(RealtimeSession(tools: [...this._tools.values.map((t) => t.metadata)]));
   }
 
   Future<void> removeTools(List<RealtimeFunctionToolHandler> tools) async {
@@ -92,10 +92,10 @@ abstract class RealtimeSessionController {
       this._tools.remove(tool.metadata.name);
     }
 
-    updateSession(RealtimeSessionUpdate(tools: [...this._tools.values.map((t) => t.metadata)]));
+    updateSession(RealtimeSession(tools: [...this._tools.values.map((t) => t.metadata)]));
   }
 
-  void updateSession(RealtimeSessionUpdate session) async {
+  void updateSession(RealtimeSession session) async {
     final event = SessionUpdateEvent(session: session);
     send(event);
   }

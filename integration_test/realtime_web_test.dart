@@ -45,7 +45,8 @@ void main() {
       timeout: const Timeout(Duration(seconds: 20)), // generous, but finite
       () async {
         // 1. Dial the realtime socket (we use the public preview model here).
-        wsCtrl = await client.createRealtimeSessionWebSocket(
+        wsCtrl = await client.createRealtimeWebsocket(
+          token: apiKey,
           model: RealtimeModel.gpt4oRealtimePreview,
         );
 

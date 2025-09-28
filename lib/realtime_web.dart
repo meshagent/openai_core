@@ -1,62 +1,30 @@
 import 'dart:convert';
 
-import 'audio.dart';
 import 'openai_client.dart';
 import 'realtime.dart';
 import 'realtime_session_controller.dart';
-import 'responses.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 extension RealtimeWebSocket on OpenAIClient {
-  Future<WebsocketRealtimeSessionController> createRealtimeSessionWebSocket(
-      {required RealtimeModel model,
-      List<Modality> modalities = const [Modality.audio, Modality.text],
-      String? instructions,
-      SpeechVoice? voice,
-      AudioFormat inputAudioFormat = AudioFormat.pcm16,
-      AudioFormat outputAudioFormat = AudioFormat.pcm16,
-      InputAudioTranscription? inputAudioTranscription,
-      NoiseReduction? inputAudioNoiseReduction,
-      TurnDetection? turnDetection,
-      ToolChoice? toolChoice,
-      num? temperature,
-      int? maxResponseOutputTokens,
-      num? speed,
-      Tracing? tracing, // "auto", Map<String,dynamic>, or null
-      // ── Client-secret options ───────────────────────────────────────────
-      String? clientSecretAnchor, // created_at
-      int? clientSecretSeconds, // 10 – 7200
-      List<RealtimeFunctionToolHandler>? initialTools}) async {
-    final session = await createRealtimeSession(
-        model: model,
-        modalities: modalities,
-        instructions: instructions,
-        voice: voice,
-        inputAudioFormat: inputAudioFormat,
-        outputAudioFormat: outputAudioFormat,
-        inputAudioTranscription: inputAudioTranscription,
-        inputAudioNoiseReduction: inputAudioNoiseReduction,
-        turnDetection: turnDetection,
-        toolChoice: toolChoice,
-        temperature: temperature,
-        maxResponseOutputTokens: maxResponseOutputTokens,
-        speed: speed,
-        tracing: tracing,
-        clientSecretAnchor: clientSecretAnchor,
-        clientSecretSeconds: clientSecretSeconds,
-        tools: [...(initialTools?.map((e) => e.metadata) ?? [])]);
+  Future<WebsocketRealtimeSessionController> createRealtimeWebsocket(
+      {required String token, RealtimeModel model = RealtimeModel.gptRealtime, String? callId, String? orgId, String? projectId}) async {
+    final url = baseUrl.resolve("realtime").replace(
+        scheme: baseUrl.scheme.replaceFirst("http", "ws"),
+        queryParameters: {if (callId != null) "callId": callId, "model": model.toJson()});
 
-    final url = baseUrl.resolve("realtime").replace(scheme: baseUrl.scheme.replaceFirst("http", "ws"));
+    final headers = getHeaders({});
 
-    final ws = await WebSocketChannel.connect(Uri.parse("$url?model=${model.toJson()}"), protocols: [
+    headers!["Authorization"] = "Bearer " + token;
+
+    final ws = await WebSocketChannel.connect(url, protocols: [
       "realtime",
       // Auth
-      "openai-insecure-api-key." + (session.clientSecret!.value),
-      // Beta protocol, required
-      "openai-beta.realtime-v1"
+      "openai-insecure-api-key." + token,
+      if (orgId != null) "openai-organization." + orgId,
+      if (projectId != null) "openai-project." + projectId,
     ]);
 
-    return WebsocketRealtimeSessionController(webSocket: ws, initialTools: initialTools);
+    return WebsocketRealtimeSessionController(webSocket: ws, initialTools: []);
   }
 }
 

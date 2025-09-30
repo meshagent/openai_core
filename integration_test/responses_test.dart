@@ -1,11 +1,15 @@
 // test/integration/response_api_test.dart
 @Timeout(Duration(minutes: 3)) // responses can stream for a bit
 import 'dart:io';
+
 import 'package:test/test.dart';
+import 'dart:typed_data';
 
 import '../lib/common.dart';
 import '../lib/openai_client.dart'; // core SDK
 import '../lib/responses.dart';
+import '../lib/files.dart';
+import '../lib/vector_stores.dart';
 import 'dart:convert';
 
 Future<String> fileToBase64(String filePath) async {
@@ -1023,5 +1027,68 @@ void main() {
         reason: 'Expected a click action after sending the screenshot.');
     final click = action2 as ComputerActionClick;
     expect(click.button, equals('left'));*/
+  });
+
+// ---------------------------------------------------------------------------
+// streamResponse – file_search (SSE streaming)
+// Verifies we receive ResponseFileSearchCallCompleted for
+// "response.file_search_call.completed" events.
+// ---------------------------------------------------------------------------
+  test('streamResponse streams file_search events through completion',
+      () async {
+    // ❶ Upload a tiny text file
+    final uploadedFile = await client.uploadFileBytes(
+      purpose: FilePurpose.assistants,
+      fileBytes: Uint8List.fromList(
+        'Test content for file search demo'.codeUnits,
+      ),
+      filename: 'test.txt',
+    );
+
+    // ❷ Create a vector store for that file
+    final created = await client.createVectorStore(
+      name: 'Test Vector Store',
+      fileIds: [uploadedFile.id],
+      chunkingStrategy: const AutoChunkingStrategy(),
+    );
+
+    // ❸ Wait for processing to finish
+    var vs = await client.retrieveVectorStore(created.id);
+    while (vs.status == VectorStoreStatus.inProgress) {
+      await Future<void>.delayed(const Duration(seconds: 1));
+      vs = await client.retrieveVectorStore(created.id);
+    }
+
+    // ❹ Start streamed response that MUST use File Search
+    final stream = await client.streamResponse(
+      model: ChatModel.gpt4o,
+      input: const ResponseInputItems([
+        InputMessage(
+          role: 'user',
+          content: [InputTextContent(text: 'Search the file for "test"')],
+        ),
+      ]),
+      tools: [
+        FileSearchTool(vectorStoreIds: [vs.id])
+      ],
+      toolChoice: const ToolChoiceRequired(), // force tool usage
+      store: false,
+    );
+
+    ResponseFileSearchCallCompleted? completedEvt;
+
+    await for (final event in stream.events) {
+      if (event is ResponseFileSearchCallCompleted) {
+        completedEvt = event;
+      }
+    }
+    await stream.close();
+
+    // ❺ Assertion: the SDK must surface the completed file_search event
+    expect(
+      completedEvt,
+      isNotNull,
+      reason: 'Did not receive file_search_call.completed in the stream',
+    );
   });
 }

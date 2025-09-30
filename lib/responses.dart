@@ -3269,19 +3269,15 @@ class ResponseFileSearchCallSearching extends ResponseFileSearchCallEvent {
 }
 
 class ResponseFileSearchCallCompleted extends ResponseFileSearchCallEvent {
-  ResponseFileSearchCallCompleted(Map<String, dynamic> j)
-      : super(
-          'response.file_search_call.completed',
-          itemId: j['item_id'],
-          outputIndex: j['output_index'],
-          sequenceNumber: j['sequence_number'],
-        );
+  ResponseFileSearchCallCompleted({
+    required super.itemId,
+    required super.outputIndex,
+    required super.sequenceNumber,
+  }) : super('response.file_search_call.completed');
 
   static ResponseFileSearchCallCompleted fromJson(Map<String, dynamic> json) {
-    switch (json['type']) {
-      default:
-        throw ArgumentError('Unknown file-search event type "${json['type']}".');
-    }
+    return ResponseFileSearchCallCompleted(
+        itemId: json['item_id'], outputIndex: json['output_index'], sequenceNumber: json['sequence_number']);
   }
 }
 

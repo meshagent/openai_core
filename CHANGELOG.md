@@ -1,3 +1,7 @@
+# 0.10.1
+
+Fixed file search completion event fromJson
+
 # 0.10.0
 
 Add gpt-5-codex to ChatModel

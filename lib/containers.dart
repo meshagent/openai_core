@@ -134,7 +134,7 @@ class ContainerFile {
     required this.id,
     required this.object, // "container.file"
     required this.createdAt,
-    required this.bytes,
+    this.bytes,
     required this.containerId,
     required this.path,
     required this.source, // "user" | "assistant" | ...
@@ -143,7 +143,7 @@ class ContainerFile {
   final String id;
   final String object;
   final int createdAt;
-  final int bytes;
+  final int? bytes;
   final String containerId;
   final String path;
   final String source;
@@ -162,7 +162,7 @@ class ContainerFile {
         id: j['id'] as String,
         object: j['object'] as String,
         createdAt: (j['created_at'] as num).toInt(),
-        bytes: (j['bytes'] as num).toInt(),
+        bytes: (j['bytes'] as num?)?.toInt(),
         containerId: j['container_id'] as String,
         path: j['path'] as String,
         source: j['source'] as String,

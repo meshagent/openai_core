@@ -1,3 +1,7 @@
+# 0.10.2
+
+Fix nullable bytes in ContainerFile
+
 # 0.10.1
 
 Fixed file search completion event fromJson

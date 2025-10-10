@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:test/test.dart';
 import 'dart:typed_data';
 
+import '../lib/containers.dart';
 import '../lib/common.dart';
 import '../lib/openai_client.dart'; // core SDK
 import '../lib/responses.dart';
@@ -1090,5 +1091,29 @@ void main() {
       isNotNull,
       reason: 'Did not receive file_search_call.completed in the stream',
     );
+  });
+
+  test('can list code interpreter files', () async {
+    final client = OpenAIClient(apiKey: Platform.environment['OPENAI_API_KEY']);
+    final responseStream = await client.streamResponse(
+      model: ChatModel.gpt4o,
+      input: ResponseInputText('Create a text file test.txt with hello'),
+      tools: const [
+        CodeInterpreterTool(container: CodeInterpreterContainerAuto())
+      ],
+    );
+
+    final response = (await responseStream.events.toList())
+        .whereType<ResponseCompleted>()
+        .first
+        .response;
+
+    final containerId = (response.output ?? <ResponseItem>[])
+        .whereType<CodeInterpreterCall>()
+        .first
+        .containerId!;
+
+    final files = await client.listContainerFiles(containerId);
+    expect(files.data.length, 1);
   });
 }

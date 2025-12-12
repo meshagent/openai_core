@@ -7,7 +7,12 @@ import 'realtime_session_controller.dart';
 
 extension RealtimeIO on OpenAIClient {
   Future<WebsocketRealtimeSessionController> createRealtimeWebsocket(
-      {required String token, RealtimeModel model = RealtimeModel.gptRealtime, String? callId, String? orgId, String? projectId}) async {
+      {required String token,
+      RealtimeModel model = RealtimeModel.gptRealtime,
+      String? callId,
+      String? orgId,
+      String? projectId,
+      List<RealtimeFunctionToolHandler>? initialTools}) async {
     final url = baseUrl.resolve("realtime").replace(
         scheme: baseUrl.scheme.replaceFirst("http", "ws"),
         queryParameters: {if (callId != null) "callId": callId, "model": model.toJson()});
@@ -24,7 +29,7 @@ extension RealtimeIO on OpenAIClient {
 
     final ws = await WebSocket.connect(url.toString(), headers: headers);
 
-    return WebsocketRealtimeSessionController(webSocket: ws, initialTools: []);
+    return WebsocketRealtimeSessionController(webSocket: ws, initialTools: initialTools);
   }
 }
 
@@ -41,6 +46,10 @@ class WebsocketRealtimeSessionController extends RealtimeSessionController {
 
   void _eventLoop() async {
     await for (final event in webSocket) {
+      if (serverEventsController.isClosed) {
+        break;
+      }
+
       serverEventsController.add(RealtimeEvent.fromJson(jsonDecode(event)));
     }
   }
@@ -49,6 +58,10 @@ class WebsocketRealtimeSessionController extends RealtimeSessionController {
 
   @override
   void send(RealtimeEvent event) {
+    if (serverEventsController.isClosed) {
+      return;
+    }
+
     webSocket.add(jsonEncode(event.toJson()));
     super.send(event);
   }

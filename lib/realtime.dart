@@ -6,6 +6,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
 import 'audio.dart';
@@ -13,7 +14,6 @@ import 'common.dart';
 import 'exceptions.dart';
 import 'openai_client.dart';
 import 'responses.dart';
-import 'package:http/http.dart' as http;
 
 class NoiseReductionType extends JsonEnum {
   static const nearField = NoiseReductionType('near_field');
@@ -491,7 +491,7 @@ extension RealtimeAPI on OpenAIClient {
       if (tools != null) session['tools'] = tools.map((t) => t.toJson()).toList();
       if (toolChoice != null) session['tool_choice'] = toolChoice.toJson();
       if (tracing != null) session['tracing'] = tracing.toJson();
-      if (turnDetection != null) session['turn_detection'] = turnDetection.toJson();
+      session['turn_detection'] = turnDetection == null ? null : turnDetection.toJson();
 
       // Modalities: For realtime sessions, server defaults to ["audio"].
       // You may set ["text"] to disable audio output (cannot request both).
@@ -3405,7 +3405,7 @@ class RealtimeSessionAudioInput {
       if (format != null) "format": format?.toJson(),
       if (noiseReduction != null) "noise_reduction": noiseReduction?.toJson(),
       if (transcription != null) "transcription": transcription?.toJson(),
-      if (turnDetection != null) "turn_detection": turnDetection?.toJson(),
+      "turn_detection": turnDetection == null ? null : turnDetection?.toJson(),
     };
   }
 

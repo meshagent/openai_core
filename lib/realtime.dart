@@ -6,6 +6,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
 import 'audio.dart';
@@ -13,7 +14,6 @@ import 'common.dart';
 import 'exceptions.dart';
 import 'openai_client.dart';
 import 'responses.dart';
-import 'package:http/http.dart' as http;
 
 class NoiseReductionType extends JsonEnum {
   static const nearField = NoiseReductionType('near_field');
@@ -70,13 +70,22 @@ class NoiseReduction {
 
 class InputAudioTranscription {
   const InputAudioTranscription({this.model, this.language, this.prompt});
+
   factory InputAudioTranscription.fromJson(Map<String, dynamic> j) => InputAudioTranscription(
         model: AudioModel.fromJson(j['model']),
         language: j['language'],
         prompt: j['prompt'],
       );
-  final AudioModel? model, language, prompt;
-  Map<String, dynamic> toJson() => {'model': model, 'language': language, 'prompt': prompt}..removeWhere((k, v) => v == null);
+
+  final AudioModel? model;
+  final String? language;
+  final String? prompt;
+
+  Map<String, dynamic> toJson() => {
+        if (model != null) 'model': model!.toJson(),
+        if (language != null) 'language': language,
+        if (prompt != null) 'prompt': prompt,
+      };
 }
 
 class TurnDetection {
@@ -482,7 +491,7 @@ extension RealtimeAPI on OpenAIClient {
       if (tools != null) session['tools'] = tools.map((t) => t.toJson()).toList();
       if (toolChoice != null) session['tool_choice'] = toolChoice.toJson();
       if (tracing != null) session['tracing'] = tracing.toJson();
-      if (turnDetection != null) session['turn_detection'] = turnDetection.toJson();
+      session['turn_detection'] = turnDetection == null ? null : turnDetection.toJson();
 
       // Modalities: For realtime sessions, server defaults to ["audio"].
       // You may set ["text"] to disable audio output (cannot request both).
@@ -3240,10 +3249,9 @@ abstract class BaseRealtimeSession {
 
   Map<String, dynamic> toJson() => {
         if (id != null) 'id': id,
-        if (object != null) 'object': object,
         if (model != null) 'model': model?.toJson(),
         if (instructions != null) 'instructions': instructions,
-        'tools': tools?.map((t) => t.toJson()).toList(),
+        if (tools != null) 'tools': tools!.map((t) => t.toJson()).toList(),
         if (toolChoice != null) 'tool_choice': toolChoice!.toJson(),
         if (temperature != null) 'temperature': temperature,
         if (tracing != null) 'tracing': tracing?.toJson(),
@@ -3329,6 +3337,7 @@ class RealtimeSession extends BaseRealtimeSession {
     ..addAll({
       'type': 'realtime',
       if (maxOutputTokens != null) 'max_output_tokens': maxOutputTokens,
+      if (audio != null) 'audio': audio!.toJson(),
       if (outputModalities != null) "output_modalities": outputModalities!.map((e) => e.toJson()).toList(),
       if (truncation != null) 'truncation': truncation!.toJson(),
       if (prompt != null) 'prompt': prompt!.toJson(),
@@ -3396,7 +3405,7 @@ class RealtimeSessionAudioInput {
       if (format != null) "format": format?.toJson(),
       if (noiseReduction != null) "noise_reduction": noiseReduction?.toJson(),
       if (transcription != null) "transcription": transcription?.toJson(),
-      if (turnDetection != null) "turn_detection": turnDetection?.toJson(),
+      "turn_detection": turnDetection == null ? null : turnDetection?.toJson(),
     };
   }
 
@@ -3405,7 +3414,7 @@ class RealtimeSessionAudioInput {
       format: j['format'] == null ? null : AudioFormat.fromJson(j['format']),
       noiseReduction: j['noise_reduction'] == null ? null : NoiseReduction.fromJson(j['noise_reduction']),
       turnDetection: j['turn_detection'] == null ? null : TurnDetection.fromJson(j['turn_detection']),
-      transcription: j['transcription'] == null ? null : InputAudioTranscription.fromJson(j['input_audio_transcription']),
+      transcription: j['transcription'] == null ? null : InputAudioTranscription.fromJson(j['transcription']),
     );
   }
 }
